@@ -91,7 +91,7 @@ export default function Home() {
   const mainBg = dark ? "bg-[#16181d]" : "bg-gray-50"
   const navBg = dark ? "bg-[#191b20]/95 border-b border-[#23242a]" : "bg-white/90 border-b border-gray-200"
   const cardBg = dark ? "bg-[#23242a] hover:bg-[#24272f]" : "bg-white hover:bg-gray-50"
-  const textPrimary = dark ? "text-white" : "text-gray-900"
+  // const textPrimary = dark ? "text-white" : "text-gray-900"  // ← 已删除
   const textSecondary = dark ? "text-gray-300" : "text-gray-600"
   const tagBg = dark ? "bg-[#282c33] text-blue-200" : "bg-blue-100 text-blue-700"
   const premiumBg = dark ? "bg-yellow-600/80 text-yellow-200" : "bg-yellow-300 text-yellow-800"

@@ -17,7 +17,8 @@ const categoryList = [
   { name: "图片", key: "图片", icon: <PhotoIcon className="w-5 h-5" /> }
 ]
 
-const categories = ["全部", ...categoryList.map(c => c.key)]
+// 新增“付费资源”分类
+const categories = ["全部", ...categoryList.map(c => c.key), "付费资源"]
 
 const tools: Tool[] = [
   {
@@ -75,23 +76,30 @@ const tools: Tool[] = [
 ]
 
 export default function Home() {
-  // 简易暗色模式切换
+  // 修正点：必须给useState明确初始值（true/false）
   const [dark, setDark] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState("全部")
   const [search, setSearch] = useState("")
 
+  // 分类过滤支持“付费资源”
   const filteredTools = tools.filter(tool => {
-    const matchCat = selectedCategory === "全部" || tool.category === selectedCategory
-    const matchSearch = tool.name.toLowerCase().includes(search.toLowerCase()) ||
+    let matchCat = true
+    if (selectedCategory === "付费资源") {
+      matchCat = tool.isPremium === true // 这里必须明确对比true
+    } else if (selectedCategory !== "全部") {
+      matchCat = tool.category === selectedCategory
+    }
+    const matchSearch =
+      tool.name.toLowerCase().includes(search.toLowerCase()) ||
       tool.description.toLowerCase().includes(search.toLowerCase())
     return matchCat && matchSearch
   })
 
-  // 暗色模式 tailwind 方案
+  // 暗色模式 Tailwind 变量
   const mainBg = dark ? "bg-[#16181d]" : "bg-gray-50"
   const navBg = dark ? "bg-[#191b20]/95 border-b border-[#23242a]" : "bg-white/90 border-b border-gray-200"
   const cardBg = dark ? "bg-[#23242a] hover:bg-[#24272f]" : "bg-white hover:bg-gray-50"
-  // const textPrimary = dark ? "text-white" : "text-gray-900"  // ← 已删除
+  const textPrimary = dark ? "text-white" : "text-gray-900"
   const textSecondary = dark ? "text-gray-300" : "text-gray-600"
   const tagBg = dark ? "bg-[#282c33] text-blue-200" : "bg-blue-100 text-blue-700"
   const premiumBg = dark ? "bg-yellow-600/80 text-yellow-200" : "bg-yellow-300 text-yellow-800"
@@ -99,7 +107,7 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen flex flex-col ${mainBg} transition-colors duration-200`}>
-      {/* 顶部导航栏+分类Tab */}
+      {/* 顶部导航+分类Tab */}
       <header className={`sticky top-0 z-30 w-full ${navBg} transition-all`}>
         <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-4 md:px-8">
           {/* 左LOGO */}
@@ -107,8 +115,8 @@ export default function Home() {
             <RocketLaunchIcon className="w-7 h-7" />
             <span className="tracking-wider">AI极客工具箱</span>
           </div>
-          {/* 分类Tab */}
-          <nav className="hidden md:flex items-center gap-2 ml-8">
+          {/* 分类Tab（横向分布） */}
+          <nav className="hidden md:flex items-center gap-1 ml-8">
             {categories.map(cat => (
               <button
                 key={cat}
@@ -123,12 +131,13 @@ export default function Home() {
                 `}
                 style={{ minWidth: 54 }}
               >
-                {cat !== "全部" && categoryList.find(c => c.key === cat)?.icon}
+                {cat === "付费资源" ? <LockClosedIcon className="w-4 h-4 mr-1" /> : null}
+                {cat !== "全部" && cat !== "付费资源" ? categoryList.find(c => c.key === cat)?.icon : null}
                 {cat}
               </button>
             ))}
           </nav>
-          {/* 搜索框+登录+暗色按钮 */}
+          {/* 搜索框+登录+会员+暗色 */}
           <div className="flex items-center gap-2 ml-auto">
             <div className="relative hidden md:block">
               <input
@@ -140,6 +149,9 @@ export default function Home() {
               />
               <MagnifyingGlassIcon className="w-4 h-4 absolute left-2 top-2 text-gray-400" />
             </div>
+            <button className="px-4 py-1.5 rounded-full bg-yellow-500 text-white font-semibold hover:bg-yellow-600 text-sm flex items-center ml-1">
+              <LockClosedIcon className="w-4 h-4 mr-1" /> 会员开通
+            </button>
             <button className="px-4 py-1.5 rounded-full bg-blue-600 text-white font-semibold hover:bg-blue-700 text-sm flex items-center">
               <UserCircleIcon className="w-4 h-4 mr-1" /> 登录
             </button>
@@ -158,7 +170,7 @@ export default function Home() {
       </header>
 
       {/* Hero区 */}
-      <section className={`w-full flex flex-col items-center justify-center py-10 ${dark ? "" : "bg-gradient-to-r from-blue-100 to-teal-100"}`}>
+      <section className={`w-full flex flex-col items-center justify-center py-10`}>
         <h1 className={`font-extrabold text-4xl md:text-6xl mb-3 mt-4 text-center ${dark ? "text-white" : "text-gray-900"} tracking-tight leading-tight`}>
           AI极客工具箱
         </h1>
@@ -194,15 +206,15 @@ export default function Home() {
               }
             `}
           >
-            {cat !== "全部" && categoryList.find(c => c.key === cat)?.icon}
+            {cat === "付费资源" ? <LockClosedIcon className="w-4 h-4 mr-1" /> : null}
+            {cat !== "全部" && cat !== "付费资源" ? categoryList.find(c => c.key === cat)?.icon : null}
             {cat}
           </button>
         ))}
       </nav>
 
-      
       {/* 工具区 */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 pb-12 mt-10">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 pb-12">
         <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {filteredTools.length === 0 ? (
             <div className="col-span-full text-center text-gray-400 py-12">未找到相关资源</div>
@@ -243,7 +255,6 @@ export default function Home() {
           )}
         </ul>
       </main>
-
 
       {/* 底部栏 */}
       <footer className={`text-center text-xs py-8 mt-8 ${dark ? "text-gray-500" : "text-gray-400"}`}>

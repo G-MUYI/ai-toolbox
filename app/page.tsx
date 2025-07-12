@@ -1,23 +1,18 @@
 "use client"
 import { useState, useEffect } from "react"
 import {
-  RocketLaunchIcon,
-  LockClosedIcon,
-  BookOpenIcon,
-  PhotoIcon,
-  MagnifyingGlassIcon,
-  UserCircleIcon,
-  MoonIcon,
-  SunIcon,
-  ChevronDownIcon
+  RocketLaunchIcon, LockClosedIcon, BookOpenIcon, PhotoIcon,
+  MagnifyingGlassIcon, UserCircleIcon, MoonIcon, SunIcon, ChevronDownIcon,
+  ArrowRightCircleIcon, CheckCircleIcon, BoltIcon
 } from "@heroicons/react/24/solid"
 
-// 主流AI工具二级分类（部分举例，可继续扩展）
+// 站点上线日，实际运营2天
+const SITE_START_DATE = new Date("2025-07-10")
+
+// 分类结构
 const CATEGORY_TREE = [
   {
-    name: "AI工具",
-    key: "AI工具",
-    icon: <RocketLaunchIcon className="w-5 h-5" />,
+    name: "AI工具", key: "AI工具", icon: <RocketLaunchIcon className="w-5 h-5" />,
     children: [
       { name: "对话/聊天", key: "chat" },
       { name: "绘画/图片生成", key: "img" },
@@ -32,26 +27,15 @@ const CATEGORY_TREE = [
       { name: "效率/其他", key: "misc" }
     ]
   },
+  { name: "小说", key: "小说", icon: <BookOpenIcon className="w-5 h-5" />, children: [] },
+  { name: "图片", key: "图片", icon: <PhotoIcon className="w-5 h-5" />, children: [] },
   {
-    name: "小说",
-    key: "小说",
-    icon: <BookOpenIcon className="w-5 h-5" />,
-    children: []
-  },
-  {
-    name: "图片",
-    key: "图片",
-    icon: <PhotoIcon className="w-5 h-5" />,
-    children: []
-  },
-  {
-    name: "会员专区",
-    key: "会员专区",
-    icon: <LockClosedIcon className="w-5 h-5" />,
+    name: "会员专区", key: "会员专区", icon: <LockClosedIcon className="w-5 h-5" />,
     children: [
       { name: "破局资料", key: "break" }
     ]
-  }
+  },
+  { name: "关于我们", key: "about", icon: <UserCircleIcon className="w-5 h-5" />, children: [] }
 ]
 
 // 示例资源
@@ -65,21 +49,34 @@ const tools = [
   { name: "SEO AI", description: "AI驱动SEO内容", url: "#", category: "AI工具", subCategory: "seo" },
   { name: "《折腰》by 蓬莱客", description: "经典古言小说", url: "#", category: "小说" },
   { name: "插画壁纸包", description: "精选AI插画壁纸", url: "#", category: "图片" },
-  { name: "副业指南合集", description: "10本破局资料，会员专享", url: "#", category: "会员专区", subCategory: "break", isPremium: true }
+  { name: "副业指南合集", description: "10本破局资料，会员专享", url: "#", category: "会员专区", subCategory: "break", isPremium: true },
+  // 关于我们介绍
+  { name: "关于本站", description: "AI极客工具箱，致力于整合AI工具、会员资料、小说、图片等资源，为极客用户提供一站式高效导航和知识服务。", url: "#", category: "about" }
 ]
 
-const SITE_START_DATE = new Date("2024-06-01")
+// 网站大事件时间线
+const TIMELINE = [
+  { date: "2025-07-10", title: "AI极客工具箱 正式上线", icon: <BoltIcon className="w-4 h-4 text-blue-500" /> },
+  { date: "2025-07-11", title: "会员专区资料开放，首批资源同步", icon: <CheckCircleIcon className="w-4 h-4 text-green-500" /> },
+  { date: "2025-07-12", title: "支持AI工具主流细分分类与二级菜单交互", icon: <ArrowRightCircleIcon className="w-4 h-4 text-indigo-500" /> }
+]
 
 export default function Home() {
   const [dark, setDark] = useState(false)
-  const [selectedCat, setSelectedCat] = useState<string | null>(null) // 一级分类
-  const [selectedSubCat, setSelectedSubCat] = useState<string | null>(null) // 二级分类
+  const [selectedCat, setSelectedCat] = useState<string | null>("AI工具")
+  const [selectedSubCat, setSelectedSubCat] = useState<string | null>(null)
   const [hoverMenu, setHoverMenu] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [days, setDays] = useState<number>(0)
 
+  // 实时刷新运营天数
   useEffect(() => {
-    setDays(Math.floor((Date.now() - SITE_START_DATE.getTime()) / 86400000))
+    function updateDays() {
+      setDays(Math.max(1, Math.floor((Date.now() - SITE_START_DATE.getTime()) / 86400000) + 1))
+    }
+    updateDays()
+    const timer = setInterval(updateDays, 1000 * 60 * 10) // 每10分钟刷新一次
+    return () => clearInterval(timer)
   }, [])
 
   // 筛选工具
@@ -87,9 +84,8 @@ export default function Home() {
     let matchCat =
       (selectedCat === null) ||
       (tool.category === selectedCat && (!selectedSubCat || tool.subCategory === selectedSubCat))
-    // 没选分类时默认全显示
+    // 无二级分类时直接筛选一级
     if (selectedCat && !CATEGORY_TREE.find(c => c.key === selectedCat)?.children.length) {
-      // 该分类无二级分类
       matchCat = tool.category === selectedCat
     }
     const searchMatch =
@@ -106,22 +102,22 @@ export default function Home() {
   const tagBg = dark ? "bg-[#282c33] text-blue-200" : "bg-blue-100 text-blue-700"
   const premiumBg = dark ? "bg-yellow-600/80 text-yellow-200" : "bg-yellow-300 text-yellow-800"
   const searchBg = dark ? "bg-[#23242a] border-[#33353a] text-white" : "bg-gray-100 border-gray-300 text-gray-900"
-
-  // Hero渐变背景亮色修正
+  // Hero渐变背景
   const heroBg = dark
     ? "bg-gradient-to-r from-blue-800 via-indigo-900 to-gray-900"
-    : "bg-gradient-to-r from-blue-400 via-purple-200 to-white"
+    : "bg-gradient-to-r from-blue-400 via-purple-300 to-white"
 
   return (
     <div className={`min-h-screen flex flex-col ${mainBg} transition-colors duration-200`}>
-      {/* 顶部导航+分类 */}
+      {/* 顶部导航 */}
       <header className={`sticky top-0 z-30 w-full ${navBg} transition-all`}>
         <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-4 md:px-8">
+          {/* LOGO */}
           <div className="flex items-center gap-2 font-bold text-2xl text-blue-500">
             <RocketLaunchIcon className="w-7 h-7" />
             <span>AI极客工具箱</span>
           </div>
-          {/* 分类Tab+悬停二级 */}
+          {/* 分类Tab+二级 */}
           <nav className="flex items-center gap-1 ml-8">
             {CATEGORY_TREE.map(cat => (
               <div
@@ -133,7 +129,7 @@ export default function Home() {
                 <button
                   className={`
                     px-4 py-2 rounded-full font-medium text-sm flex items-center gap-1 transition
-                    ${selectedCat === cat.key ? "bg-blue-600 text-white" : dark ? "text-gray-300 hover:text-blue-200" : "text-gray-600 hover:text-blue-700"}
+                    ${selectedCat === cat.key && !selectedSubCat ? "bg-blue-600 text-white" : dark ? "text-gray-300 hover:text-blue-200" : "text-gray-600 hover:text-blue-700"}
                   `}
                   onClick={() => {
                     setSelectedCat(cat.key)
@@ -146,15 +142,16 @@ export default function Home() {
                     <ChevronDownIcon className="w-4 h-4 ml-1" />
                   )}
                 </button>
-                {/* 二级菜单 */}
+                {/* 二级菜单，鼠标悬停展开/可点 */}
                 {cat.children.length > 0 && hoverMenu === cat.key && (
-                  <div className={`absolute left-0 top-full mt-2 min-w-[160px] rounded-xl shadow-lg ${dark ? "bg-[#232834]" : "bg-white"} z-50 border border-gray-100`}>
+                  <div className={`absolute left-0 top-full mt-2 min-w-[170px] rounded-xl shadow-lg ${dark ? "bg-[#232834]" : "bg-white"} z-50 border border-gray-100`}>
                     {cat.children.map(sub => (
                       <button
                         key={sub.key}
                         onClick={() => {
                           setSelectedCat(cat.key)
                           setSelectedSubCat(sub.key)
+                          setHoverMenu(null)
                         }}
                         className={`
                           block px-5 py-2 w-full text-left rounded-xl font-normal text-sm
@@ -171,7 +168,7 @@ export default function Home() {
               </div>
             ))}
           </nav>
-          {/* 搜索/登录/暗色 */}
+          {/* 搜索/登录/会员/暗色 */}
           <div className="flex items-center gap-2 ml-auto">
             <div className="relative hidden md:block">
               <input
@@ -186,6 +183,10 @@ export default function Home() {
             <button className="px-4 py-1.5 rounded-full bg-blue-600 text-white font-semibold hover:bg-blue-700 text-sm flex items-center">
               <UserCircleIcon className="w-4 h-4 mr-1" /> 登录
             </button>
+            {/* 会员开通按钮 */}
+            <button className="px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-500 text-white font-semibold hover:opacity-80 text-sm ml-2 shadow transition">
+              <LockClosedIcon className="w-4 h-4 mr-1" /> 开通会员
+            </button>
             <button
               onClick={() => setDark(!dark)}
               className="ml-1 rounded-full p-2 border border-transparent hover:border-blue-500 transition"
@@ -197,8 +198,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero区，亮色渐变背景 */}
-      <section className={`w-full flex flex-col items-center justify-center py-14 md:py-20 relative`}>
+      {/* Hero区 渐变色 */}
+      <section className={`w-full flex flex-col items-center justify-center py-14 md:py-20 relative overflow-hidden`}>
         <div className={`absolute inset-0 -z-10 ${heroBg}`}></div>
         <h1 className="font-extrabold text-4xl md:text-6xl mb-3 text-white text-center drop-shadow tracking-tight leading-tight">
           AI极客工具箱
@@ -218,6 +219,32 @@ export default function Home() {
             <MagnifyingGlassIcon className="w-5 h-5 absolute left-2 top-2 text-blue-500" />
           </div>
         </div>
+        {/* 运营天数实时 */}
+        <div className="mt-8 text-sm text-blue-100 bg-black/20 px-4 py-1.5 rounded-full shadow backdrop-blur">
+          <span>本站已稳定运营</span>
+          <span className="mx-2 font-bold text-white">{days}</span>
+          <span>天</span>
+        </div>
+      </section>
+
+      {/* 网站大事件 时间线 */}
+      <section className="w-full max-w-3xl mx-auto px-4 pb-2">
+        <h2 className="text-lg font-bold mb-3 text-blue-600 flex items-center gap-2">
+          <BoltIcon className="w-6 h-6" /> 网站大事件
+        </h2>
+        <ol className="relative border-l-2 border-blue-200 pl-6 pb-6">
+          {TIMELINE.map((item, idx) => (
+            <li key={idx} className="mb-6 ml-2">
+              <span className="absolute -left-4 flex items-center justify-center w-8 h-8 rounded-full bg-white shadow border border-blue-300">
+                {item.icon}
+              </span>
+              <div className="pl-3">
+                <span className="block text-xs text-gray-400">{item.date}</span>
+                <span className="block text-base font-medium">{item.title}</span>
+              </div>
+            </li>
+          ))}
+        </ol>
       </section>
 
       {/* 工具区 */}
@@ -265,10 +292,9 @@ export default function Home() {
         </ul>
       </main>
 
-      {/* 底部栏+运营天数 */}
+      {/* 底部栏 */}
       <footer className={`text-center text-xs py-8 mt-8 ${dark ? "text-gray-500" : "text-gray-400"}`}>
-        © {new Date().getFullYear()} AI极客工具箱 · 仅供学习交流<br />
-        站点已稳定运营 <span className="font-bold text-blue-400">{days}</span> 天
+        © {new Date().getFullYear()} AI极客工具箱 · 仅供学习交流
       </footer>
     </div>
   )

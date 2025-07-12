@@ -1,8 +1,9 @@
 "use client"
 import { useState, useEffect } from "react"
 import {
-  RocketLaunchIcon, LockClosedIcon, BookOpenIcon, PhotoIcon,
-  MagnifyingGlassIcon, UserCircleIcon, MoonIcon, SunIcon, ChevronDownIcon
+  RocketLaunchIcon, LockClosedIcon,
+  MagnifyingGlassIcon, UserCircleIcon,
+  MoonIcon, SunIcon
 } from "@heroicons/react/24/solid"
 
 // 工具项类型定义

@@ -114,8 +114,6 @@ export default function Home() {
     return initialMap
   })
   
-  const [activeSection, setActiveSection] = useState(0)
-  
   // Refs - 修复类型问题
   const navTimeout = useRef<NodeJS.Timeout | null>(null)
   const sectionRefs = useRef<(HTMLElement | null)[]>([])
@@ -131,27 +129,6 @@ export default function Home() {
     const timer = setInterval(updateDays, 1000 * 60 * 10)
     return () => clearInterval(timer)
   }, [])
-
-  // 滚动监听 - 修复类型问题
-  useEffect(() => {
-    if (about) return
-    
-    function onScroll() {
-      const scrollY = window.scrollY + 120
-      let current = 0
-      
-      sectionRefs.current.forEach((ref, i) => {
-        if (ref && ref.offsetTop <= scrollY) {
-          current = i
-        }
-      })
-      
-      setActiveSection(current)
-    }
-    
-    window.addEventListener("scroll", onScroll)
-    return () => window.removeEventListener("scroll", onScroll)
-  }, [about])
 
   // 搜索自动定位
   useEffect(() => {
@@ -236,153 +213,115 @@ export default function Home() {
     ? "bg-gray-800 border-gray-600 text-white placeholder-gray-400" 
     : "bg-white border-gray-200 text-gray-900 placeholder-gray-500"
 
-    return (
-      <div className={`min-h-screen ${mainBg} transition-colors duration-300`}>
-        {/* 导航栏 */}
-        <header className={`sticky top-0 z-50 backdrop-blur-md border-b ${navBg}`}>
-          <div className={`${pagePadding} h-16 flex items-center justify-between`}>
-            {/* Logo */}
-            <div
-              className="flex items-center gap-2 font-bold text-2xl text-blue-600 cursor-pointer hover:text-blue-700 transition-colors"
-              onClick={handleLogoClick}
-              title="返回首页"
-            >
-              <RocketLaunchIcon className="w-7 h-7" />
-              <span className="hidden sm:inline">AI极客工具箱</span>
-              <span className="sm:hidden">AI工具箱</span>
-            </div>
-  
-            {/* 导航菜单 - 添加活跃状态指示 */}
-            <nav className="hidden md:flex items-center gap-6">
-              {NAV.map((item, idx) =>
-                "sub" in item ? (
-                  <div
-                    key={item.name}
-                    className="relative"
-                    onMouseEnter={() => handleNavEnter(idx)}
-                    onMouseLeave={handleNavLeave}
-                  >
-                    <button
-                      className={`text-sm font-medium transition-colors flex items-center gap-1 ${
-                        // 使用 activeSection 来高亮当前活跃的导航项
-                        (item.name === "AI工具" && activeSection >= 0 && activeSection < GROUPS.length)
-                          ? "text-blue-600 font-bold"
-                          : dark ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-blue-600"
-                      }`}
-                      onClick={() => handleNavMenuClick(idx)}
-                    >
-                      {item.name}
-                      <svg 
-                        className={`w-4 h-4 transition-transform duration-200 ${
-                          navOpen === idx ? "rotate-180" : ""
-                        }`} 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    
-                    {navOpen === idx && (
-                      <div
-                        className={`absolute left-0 top-full mt-2 min-w-[140px] rounded-lg shadow-lg py-2 border ${
-                          dark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-                        }`}
-                        onMouseEnter={() => { if (navTimeout.current) clearTimeout(navTimeout.current) }}
-                        onMouseLeave={handleNavLeave}
-                      >
-                        {item.sub.map((sub, subIdx) => (
-                          <a
-                            key={sub.name}
-                            href={sub.link}
-                            className={`block px-4 py-2 text-sm transition-colors ${
-                              // 根据当前活跃section高亮对应的子菜单项
-                              (sub.link === "#write" && activeSection === 0) ||
-                              (sub.link === "#image" && activeSection === 1) ||
-                              (sub.link === "#audio" && activeSection === 2)
-                                ? "text-blue-600 font-bold bg-blue-50"
-                                : dark 
-                                ? "text-gray-300 hover:text-white hover:bg-gray-700" 
-                                : "text-gray-700 hover:text-blue-600 hover:bg-blue-50"
-                            }`}
-                          >
-                            {sub.name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
+  return (
+    <div className={`min-h-screen ${mainBg} transition-colors duration-300`}>
+      {/* 导航栏 */}
+      <header className={`sticky top-0 z-50 backdrop-blur-md border-b ${navBg}`}>
+        <div className={`${pagePadding} h-16 flex items-center justify-between`}>
+          {/* Logo */}
+          <div
+            className="flex items-center gap-2 font-bold text-2xl text-blue-600 cursor-pointer hover:text-blue-700 transition-colors"
+            onClick={handleLogoClick}
+            title="返回首页"
+          >
+            <RocketLaunchIcon className="w-7 h-7" />
+            <span className="hidden sm:inline">AI极客工具箱</span>
+            <span className="sm:hidden">AI工具箱</span>
+          </div>
+
+          {/* 导航菜单 */}
+          <nav className="hidden md:flex items-center gap-6">
+            {NAV.map((item, idx) =>
+              "sub" in item ? (
+                <div
+                  key={item.name}
+                  className="relative"
+                  onMouseEnter={() => handleNavEnter(idx)}
+                  onMouseLeave={handleNavLeave}
+                >
                   <button
-                    key={item.name}
-                    className={`text-sm font-medium transition-colors ${
+                    className={`text-sm font-medium transition-colors flex items-center gap-1 ${
                       dark ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-blue-600"
                     }`}
-                    onClick={() => setAbout(item.name === "关于我们")}
+                    onClick={() => handleNavMenuClick(idx)}
                   >
                     {item.name}
+                    <svg 
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        navOpen === idx ? "rotate-180" : ""
+                      }`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
-                )
-              )}
-            </nav>
-  
-            {/* 右侧按钮组 */}
-            <div className="flex items-center gap-3">
-              <button className={`${btnBase} bg-blue-100 hover:bg-blue-200 text-blue-700`}>
-                <UserCircleIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">登录</span>
-              </button>
-              <button className={`${btnBase} ${btnVip}`}>
-                <LockClosedIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">开通会员</span>
-              </button>
-              <button
-                onClick={() => setDark(!dark)}
-                className={`p-2 rounded-full transition-colors ${
-                  dark ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                }`}
-                aria-label="切换暗色模式"
-              >
-                {dark ? (
-                  <SunIcon className="w-5 h-5 text-yellow-400" />
-                ) : (
-                  <MoonIcon className="w-5 h-5 text-gray-600" />
-                )}
-              </button>
-            </div>
-          </div>
-        </header>
-  
-        {/* 添加当前section指示器 */}
-        {!about && (
-          <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 hidden lg:block">
-            <div className="flex flex-col gap-2">
-              {GROUPS.map((group, idx) => (
+                  
+                  {navOpen === idx && (
+                    <div
+                      className={`absolute left-0 top-full mt-2 min-w-[140px] rounded-lg shadow-lg py-2 border ${
+                        dark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+                      }`}
+                      onMouseEnter={() => { if (navTimeout.current) clearTimeout(navTimeout.current) }}
+                      onMouseLeave={handleNavLeave}
+                    >
+                      {item.sub.map(sub => (
+                        <a
+                          key={sub.name}
+                          href={sub.link}
+                          className={`block px-4 py-2 text-sm transition-colors ${
+                            dark 
+                              ? "text-gray-300 hover:text-white hover:bg-gray-700" 
+                              : "text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+                          }`}
+                        >
+                          {sub.name}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <button
-                  key={group.group}
-                  onClick={() => {
-                    const targetRef = sectionRefs.current[idx]
-                    if (targetRef) {
-                      targetRef.scrollIntoView({ 
-                        behavior: "smooth", 
-                        block: "start" 
-                      })
-                    }
-                  }}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                    activeSection === idx 
-                      ? "bg-blue-600 scale-125" 
-                      : dark 
-                      ? "bg-gray-600 hover:bg-gray-500" 
-                      : "bg-gray-300 hover:bg-gray-400"
+                  key={item.name}
+                  className={`text-sm font-medium transition-colors ${
+                    dark ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-blue-600"
                   }`}
-                  title={group.group}
-                />
-              ))}
-            </div>
+                  onClick={() => setAbout(item.name === "关于我们")}
+                >
+                  {item.name}
+                </button>
+              )
+            )}
+          </nav>
+
+          {/* 右侧按钮组 */}
+          <div className="flex items-center gap-3">
+            <button className={`${btnBase} bg-blue-100 hover:bg-blue-200 text-blue-700`}>
+              <UserCircleIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">登录</span>
+            </button>
+            <button className={`${btnBase} ${btnVip}`}>
+              <LockClosedIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">开通会员</span>
+            </button>
+            <button
+              onClick={() => setDark(!dark)}
+              className={`p-2 rounded-full transition-colors ${
+                dark ? "hover:bg-gray-700" : "hover:bg-gray-100"
+              }`}
+              aria-label="切换暗色模式"
+            >
+              {dark ? (
+                <SunIcon className="w-5 h-5 text-yellow-400" />
+              ) : (
+                <MoonIcon className="w-5 h-5 text-gray-600" />
+              )}
+            </button>
           </div>
-        )}
+        </div>
+      </header>
 
       {/* Hero 区域 */}
       {!about && (
@@ -450,7 +389,6 @@ export default function Home() {
             return (
               <section
                 key={group.group}
-                id={group.category} // 添加 id 属性以便锚点导航
                 ref={(el) => { 
                   sectionRefs.current[idx] = el 
                 }}

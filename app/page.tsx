@@ -188,7 +188,7 @@ export default function Home() {
               ) : (
                 group.tools
                   .filter(t => t.tag === activeTag && activeGroupIdx === idx)
-                  .map((tool, i) => (
+                  .map(tool => (
                     <li
                       key={tool.name}
                       className={`

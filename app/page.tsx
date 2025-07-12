@@ -1,6 +1,6 @@
-"use client"
+"use client" 
 import { useState, useEffect } from "react"
-import { RocketLaunchIcon, LockClosedIcon, BookOpenIcon, PhotoIcon, FireIcon, MagnifyingGlassIcon, UserCircleIcon, MoonIcon, SunIcon, ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid"
+import { RocketLaunchIcon, LockClosedIcon, BookOpenIcon, PhotoIcon, MagnifyingGlassIcon, UserCircleIcon, MoonIcon, SunIcon, ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid"
 
 type Tool = {
   name: string
@@ -25,7 +25,7 @@ const CATEGORY_TREE = [
     name: "会员专区", key: "会员专区", icon: <LockClosedIcon className="w-5 h-5" />, 
     children: [
       { name: "破局资料", key: "破局资料" },
-      // 你可以添加更多会员子类
+      // 可添加更多会员子类
     ]
   }
 ]
@@ -43,25 +43,21 @@ const tools: Tool[] = [
 const SITE_START_DATE = new Date("2024-06-01") // 你的建站日
 
 export default function Home() {
-  // 暗色模式
   const [dark, setDark] = useState(true)
-  // 分类Tab和二级菜单展开
   const [selectedCat, setSelectedCat] = useState<string>("全部")
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [search, setSearch] = useState("")
-  // 运营天数
   const [days, setDays] = useState<number>(0)
+
   useEffect(() => {
     setDays(Math.floor((Date.now() - SITE_START_DATE.getTime()) / 86400000))
   }, [])
 
   // 工具筛选
   const filteredTools = tools.filter(tool => {
-    // 一级
     const catMatch = selectedCat === "全部"
       || tool.category === selectedCat
       || (selectedCat.includes("-") && (`${tool.category}-${tool.subCategory}` === selectedCat))
-    // 搜索
     const searchMatch = tool.name.toLowerCase().includes(search.toLowerCase()) || tool.description.toLowerCase().includes(search.toLowerCase())
     return catMatch && searchMatch
   })
@@ -70,7 +66,6 @@ export default function Home() {
   const mainBg = dark ? "bg-[#16181d]" : "bg-gray-50"
   const navBg = dark ? "bg-[#191b20]/95 border-b border-[#23242a]" : "bg-white/90 border-b border-gray-200"
   const cardBg = dark ? "bg-[#23242a] hover:bg-[#24272f]" : "bg-white hover:bg-gray-50"
-  const textPrimary = dark ? "text-white" : "text-gray-900"
   const textSecondary = dark ? "text-gray-300" : "text-gray-600"
   const tagBg = dark ? "bg-[#282c33] text-blue-200" : "bg-blue-100 text-blue-700"
   const premiumBg = dark ? "bg-yellow-600/80 text-yellow-200" : "bg-yellow-300 text-yellow-800"

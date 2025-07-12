@@ -114,6 +114,8 @@ export default function Home() {
     return initialMap
   })
   
+  const [activeSection, setActiveSection] = useState(0)
+  
   // Refs - 修复类型问题
   const navTimeout = useRef<NodeJS.Timeout | null>(null)
   const sectionRefs = useRef<(HTMLElement | null)[]>([])
@@ -129,6 +131,27 @@ export default function Home() {
     const timer = setInterval(updateDays, 1000 * 60 * 10)
     return () => clearInterval(timer)
   }, [])
+
+  // 滚动监听 - 修复类型问题
+  useEffect(() => {
+    if (about) return
+    
+    function onScroll() {
+      const scrollY = window.scrollY + 120
+      let current = 0
+      
+      sectionRefs.current.forEach((ref, i) => {
+        if (ref && ref.offsetTop <= scrollY) {
+          current = i
+        }
+      })
+      
+      setActiveSection(current)
+    }
+    
+    window.addEventListener("scroll", onScroll)
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [about])
 
   // 搜索自动定位
   useEffect(() => {
@@ -160,20 +183,13 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  // 修改：只更新标签，不滚动页面
   const handleTagClick = (groupIdx: number, tag: string) => {
     setActiveTagMap(prev => ({
       ...prev,
       [groupIdx]: tag
     }))
-    
-    // 滚动到对应分组
-    const targetRef = sectionRefs.current[groupIdx]
-    if (targetRef) {
-      targetRef.scrollIntoView({ 
-        behavior: "smooth", 
-        block: "start" 
-      })
-    }
+    // 移除滚动逻辑，只更新标签状态
   }
 
   const handleNavEnter = (idx: number) => {

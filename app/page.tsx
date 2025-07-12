@@ -20,7 +20,7 @@ type GroupType = {
   tools: ToolItem[]
 }
 
-// 更丰富的分组示例
+// 分组数据（同前）
 const GROUPS: GroupType[] = [
   {
     group: "文本生成与编辑",
@@ -68,7 +68,7 @@ const GROUPS: GroupType[] = [
   }
 ]
 
-// 导航一级/二级分类结构
+// 导航
 const NAV = [
   {
     name: "AI工具",
@@ -93,16 +93,12 @@ const NAV = [
 
 // 站点上线日
 const SITE_START_DATE = new Date("2025-07-10")
-
-// 网站事件时间线数据
 const TIMELINE = [
   { date: "2025-07-10", title: "AI极客工具箱上线 🚀" },
   { date: "2025-07-12", title: "会员专区/破局资源首发" },
   { date: "2025-07-13", title: "支持暗黑模式和运营天数展示" },
   { date: "2025-07-15", title: "支持二级菜单与时间线" },
 ]
-
-// 你的个人/站长介绍
 const ABOUT_ME = `大家好！我是木易，AI极客工具箱的创建者。
 热衷于AI工具收集与分享，致力于为开发者、自由职业者和数字创作者提供一站式AI资源导航和成长资料。本站长期维护更新，欢迎加入共建！`
 
@@ -113,11 +109,9 @@ export default function Home() {
   const [activeGroupIdx, setActiveGroupIdx] = useState(0)
   const [activeTag, setActiveTag] = useState(GROUPS[0].tags[0])
   const [about, setAbout] = useState(false)
-  // 修正类型
   const navTimeout = useRef<NodeJS.Timeout | null>(null)
   const [navOpen, setNavOpen] = useState<number | null>(null)
 
-  // 实时刷新运营天数
   useEffect(() => {
     function updateDays() {
       setDays(Math.max(1, Math.floor((Date.now() - SITE_START_DATE.getTime()) / 86400000) + 1))
@@ -127,12 +121,15 @@ export default function Home() {
     return () => clearInterval(timer)
   }, [])
 
-  // 页边距适当缩小10-20px
-  const pagePadding = "max-w-[110rem] mx-auto w-full px-4 md:px-8 xl:px-20"
+  // 跳首页
+  const handleLogoClick = () => {
+    setAbout(false)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
 
+  const pagePadding = "max-w-[110rem] mx-auto w-full px-4 md:px-8 xl:px-20"
   const btnBase = "rounded-full px-5 py-2 font-semibold text-sm transition flex items-center justify-center gap-1 shadow"
   const btnVip = "bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 text-white hover:opacity-90"
-
   const navBg = dark ? "bg-[#232834] border-b border-[#343948]" : "bg-white/90 border-b border-gray-200"
   const mainBg = dark ? "bg-[#181c22]" : "bg-white"
   const groupTitle = dark ? "text-white" : "text-gray-900"
@@ -141,7 +138,6 @@ export default function Home() {
   const textThird = dark ? "text-gray-400" : "text-gray-400"
   const inputBg = dark ? "bg-[#232834] border-[#555c6a] text-white placeholder-gray-400" : "bg-white border-blue-100 text-gray-900 placeholder-gray-400"
 
-  // 导航栏一级二级菜单
   const handleNavEnter = (idx: number) => {
     if (navTimeout.current) clearTimeout(navTimeout.current)
     setNavOpen(idx)
@@ -156,8 +152,12 @@ export default function Home() {
       {/* 顶部导航 */}
       <header className={`sticky top-0 z-30 w-full ${navBg}`}>
         <div className={`${pagePadding} h-16 flex items-center justify-between`}>
-          {/* LOGO */}
-          <div className="flex items-center gap-2 font-bold text-2xl text-blue-500 cursor-pointer">
+          {/* LOGO 点击跳首页 */}
+          <div
+            className="flex items-center gap-2 font-bold text-2xl text-blue-500 cursor-pointer select-none"
+            onClick={handleLogoClick}
+            title="返回首页"
+          >
             <RocketLaunchIcon className="w-7 h-7" />
             <span>AI极客工具箱</span>
           </div>
@@ -222,7 +222,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero区（多层渐变+无边界大气呼吸感） */}
+      {/* Hero区 */}
       {!about && (
         <section className="relative w-full min-h-[340px] pb-0 overflow-visible">
           {/* 多层渐变气氛，柔和+透明度+叠加 */}
@@ -295,7 +295,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* 首页内容模块（白色大背景+分组） */}
+      {/* 首页内容模块（工具卡片显眼） */}
       {!about && (
         <main className={`${pagePadding} flex-1 py-8 relative z-20`}>
           {GROUPS.map((group, idx) => (
@@ -329,26 +329,32 @@ export default function Home() {
                         className={`
                           transition
                           rounded-2xl p-7
-                          shadow-xl
-                          border border-transparent
+                          shadow-2xl
+                          border-0
                           flex flex-col gap-2 relative
-                          hover:scale-[1.025] hover:shadow-2xl
+                          hover:scale-[1.03] hover:shadow-2xl
+                          ring-2 ring-transparent
+                          bg-gradient-to-br from-[#f2f6ff] via-white to-[#f0f6ff]
                           ${dark
-                            ? "bg-[#232834] text-white hover:border-blue-400"
-                            : "bg-white text-gray-900 hover:border-blue-400"
-                          }
+                            ? "dark:bg-gradient-to-br dark:from-[#232834] dark:via-[#20232a] dark:to-[#2c3351] dark:text-white dark:hover:ring-blue-400"
+                            : "hover:ring-2 hover:ring-blue-300"}
                           ${tool.isVip ? "ring-2 ring-yellow-300" : ""}
                         `}
+                        style={{
+                          boxShadow: dark
+                            ? "0 8px 36px 0 rgba(24,36,64,.45)"
+                            : "0 6px 24px 0 rgba(80,140,255,0.10)"
+                        }}
                       >
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-blue-600">{tool.name}</span>
+                          <span className="font-bold text-blue-600 text-lg">{tool.name}</span>
                           {tool.isVip && (
                             <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-200 text-yellow-800 rounded-full font-bold flex items-center gap-1">
                               <LockClosedIcon className="w-4 h-4" /> 会员
                             </span>
                           )}
                         </div>
-                        <div className="text-gray-500 dark:text-gray-300 text-sm">{tool.desc}</div>
+                        <div className="text-gray-500 dark:text-gray-300 text-sm mb-3">{tool.desc}</div>
                         <a
                           href={tool.url}
                           target="_blank"
@@ -364,19 +370,34 @@ export default function Home() {
         </main>
       )}
 
-      {/* 关于我们页面 */}
+      {/* 关于我们页面（亮暗模式自适应+主副标题突出） */}
       {about && (
         <main className={`${pagePadding} flex-1 py-14`}>
-          <div className={`max-w-3xl mx-auto bg-white/90 dark:bg-[#22232a] rounded-2xl shadow-xl p-8`}>
-            <h2 className={`text-3xl font-black mb-6 ${textMain}`}>关于我们</h2>
-            <div className={`mb-10 whitespace-pre-line ${textSecond}`}>{ABOUT_ME}</div>
-            <h3 className="font-bold text-xl mb-4">网站大事件时间线</h3>
+          <div className={`
+            max-w-3xl mx-auto rounded-2xl shadow-xl p-8
+            transition-colors
+            ${dark
+              ? "bg-gradient-to-br from-[#23283a] via-[#23283a] to-[#2c3351] text-white"
+              : "bg-gradient-to-br from-[#f6f7fb] via-white to-[#f5f7ff] text-gray-900"}
+          `}>
+            <h2 className={`
+              text-4xl font-black mb-6 tracking-tight
+              ${dark ? "text-blue-200" : "text-blue-800"}
+            `}>关于我们</h2>
+            <div className={`
+              mb-10 whitespace-pre-line text-lg font-semibold leading-relaxed
+              ${dark ? "text-blue-100" : "text-blue-700"}
+            `}>{ABOUT_ME}</div>
+            <h3 className={`
+              font-bold text-2xl mb-4
+              ${dark ? "text-yellow-300" : "text-blue-700"}
+            `}>网站大事件时间线</h3>
             <ol className="relative border-l-2 border-blue-300 dark:border-blue-700 pl-6">
               {TIMELINE.map(evt => (
                 <li key={evt.date} className="mb-8">
                   <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-2.5 border-2 border-white dark:border-[#22232a]"></div>
-                  <div className="text-xs text-gray-400 mb-0.5">{evt.date}</div>
-                  <div className="text-base font-semibold">{evt.title}</div>
+                  <div className={`text-xs mb-0.5 ${dark ? "text-blue-200" : "text-gray-400"}`}>{evt.date}</div>
+                  <div className={`text-base font-semibold ${dark ? "text-white" : "text-gray-900"}`}>{evt.title}</div>
                 </li>
               ))}
             </ol>

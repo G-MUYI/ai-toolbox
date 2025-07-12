@@ -1,41 +1,79 @@
 "use client"
 import { useState } from "react"
-import { RocketLaunchIcon, LockClosedIcon, BookOpenIcon, PhotoIcon, FireIcon, MagnifyingGlassIcon, UserCircleIcon, MoonIcon, SunIcon } from "@heroicons/react/24/solid"
+import { RocketLaunchIcon, LockClosedIcon, BookOpenIcon, PhotoIcon, FireIcon, PencilSquareIcon, ChatBubbleLeftRightIcon, PaintBrushIcon, MagnifyingGlassIcon, UserCircleIcon, MoonIcon, SunIcon } from "@heroicons/react/24/solid"
 
 type Tool = {
   name: string
   description: string
   url: string
-  category: string
+  category: string       // 一级分类
+  aiType?: string        // AI工具的二级子分类
   isPremium?: boolean
 }
 
+// 细分AI工具子分类
+const aiTypes = [
+  { name: "全部AI工具", key: "全部AI工具", icon: <RocketLaunchIcon className="w-5 h-5" /> },
+  { name: "AI写作", key: "AI写作", icon: <PencilSquareIcon className="w-5 h-5" /> },
+  { name: "AI绘画", key: "AI绘画", icon: <PaintBrushIcon className="w-5 h-5" /> },
+  { name: "AI对话", key: "AI对话", icon: <ChatBubbleLeftRightIcon className="w-5 h-5" /> }
+]
+
+// 一级分类，会员专区替换付费资源
 const categoryList = [
   { name: "AI工具", key: "AI工具", icon: <RocketLaunchIcon className="w-5 h-5" /> },
   { name: "破局专区", key: "破局专区", icon: <FireIcon className="w-5 h-5" /> },
   { name: "小说", key: "小说", icon: <BookOpenIcon className="w-5 h-5" /> },
-  { name: "图片", key: "图片", icon: <PhotoIcon className="w-5 h-5" /> }
+  { name: "图片", key: "图片", icon: <PhotoIcon className="w-5 h-5" /> },
+  { name: "会员专区", key: "会员专区", icon: <LockClosedIcon className="w-5 h-5" /> }
 ]
 
-const categories = ["全部", ...categoryList.map(c => c.key), "付费资源"]
+const categories = categoryList.map(c => c.key)
 
+// 示例工具数据，含AI二级分类
 const tools: Tool[] = [
+  // AI工具（AI写作、AI绘画、AI对话等）
   {
     name: "ChatGPT",
-    description: "OpenAI 出品的强大 AI 聊天工具，支持多语言交互。",
+    description: "AI对话助手，支持多语言智能聊天。",
     url: "https://chat.openai.com",
-    category: "AI工具"
+    category: "AI工具",
+    aiType: "AI对话"
   },
   {
     name: "Midjourney",
-    description: "AI 图像生成平台，适合创意和艺术创作。",
+    description: "AI绘画生成平台，适合创意和艺术创作。",
     url: "https://midjourney.com",
     category: "AI工具",
+    aiType: "AI绘画",
     isPremium: true
   },
   {
+    name: "Notion AI",
+    description: "高效的AI写作/文档辅助工具，提升办公效率。",
+    url: "#",
+    category: "AI工具",
+    aiType: "AI写作"
+  },
+  {
+    name: "NovelAI",
+    description: "AI绘画与文本生成平台，支持自定义训练。",
+    url: "#",
+    category: "AI工具",
+    aiType: "AI绘画",
+    isPremium: true
+  },
+  {
+    name: "通义千问",
+    description: "国内AI大模型对话工具。",
+    url: "#",
+    category: "AI工具",
+    aiType: "AI对话"
+  },
+  // 破局专区
+  {
     name: "副业指南合集",
-    description: "精选10本副业破局电子书，助你快速构建副业思维。",
+    description: "10本副业破局电子书，助你快速构建副业思维。",
     url: "#",
     category: "破局专区",
     isPremium: true
@@ -44,8 +82,10 @@ const tools: Tool[] = [
     name: "搞钱计划模板",
     description: "高效搞钱SOP文档，适合个人IP、短视频起号。",
     url: "#",
-    category: "破局专区"
+    category: "破局专区",
+    isPremium: true
   },
+  // 小说
   {
     name: "《折腰》by 蓬莱客",
     description: "经典古言小说，文笔细腻，剧情跌宕起伏。",
@@ -59,6 +99,7 @@ const tools: Tool[] = [
     category: "小说",
     isPremium: true
   },
+  // 图片
   {
     name: "插画壁纸包",
     description: "100+张精美日系插画壁纸，适合桌面、创作参考。",
@@ -76,23 +117,39 @@ const tools: Tool[] = [
 
 export default function Home() {
   const [dark, setDark] = useState(true)
-  const [selectedCategory, setSelectedCategory] = useState("全部")
+  const [selectedCategory, setSelectedCategory] = useState("AI工具")
+  const [selectedAIType, setSelectedAIType] = useState("全部AI工具")
   const [search, setSearch] = useState("")
 
-  const filteredTools = tools.filter(tool => {
-    let matchCat = true
-    if (selectedCategory === "付费资源") {
-      matchCat = tool.isPremium === true
-    } else if (selectedCategory !== "全部") {
-      matchCat = tool.category === selectedCategory
-    }
-    const matchSearch =
-      tool.name.toLowerCase().includes(search.toLowerCase()) ||
-      tool.description.toLowerCase().includes(search.toLowerCase())
-    return matchCat && matchSearch
-  })
+  // 过滤逻辑
+  let filteredTools: Tool[] = []
 
-  // 只要删掉textPrimary，其它不变
+  if (selectedCategory === "会员专区") {
+    // 会员专区：所有isPremium: true的资源（含破局专区/AI工具/小说/图片）
+    filteredTools = tools.filter(tool =>
+      tool.isPremium === true &&
+      (tool.name.toLowerCase().includes(search.toLowerCase()) ||
+       tool.description.toLowerCase().includes(search.toLowerCase()))
+    )
+  } else if (selectedCategory === "AI工具") {
+    // AI工具细分二级
+    filteredTools = tools.filter(tool => {
+      const matchAIType = selectedAIType === "全部AI工具" || tool.aiType === selectedAIType
+      const matchSearch =
+        tool.name.toLowerCase().includes(search.toLowerCase()) ||
+        tool.description.toLowerCase().includes(search.toLowerCase())
+      return tool.category === "AI工具" && matchAIType && matchSearch
+    })
+  } else {
+    // 其它主分类
+    filteredTools = tools.filter(tool =>
+      tool.category === selectedCategory &&
+      (tool.name.toLowerCase().includes(search.toLowerCase()) ||
+        tool.description.toLowerCase().includes(search.toLowerCase()))
+    )
+  }
+
+  // 暗色Tailwind变量
   const mainBg = dark ? "bg-[#16181d]" : "bg-gray-50"
   const navBg = dark ? "bg-[#191b20]/95 border-b border-[#23242a]" : "bg-white/90 border-b border-gray-200"
   const cardBg = dark ? "bg-[#23242a] hover:bg-[#24272f]" : "bg-white hover:bg-gray-50"
@@ -116,7 +173,11 @@ export default function Home() {
             {categories.map(cat => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => {
+                  setSelectedCategory(cat)
+                  // 切换主分类为AI工具时，重置子分类
+                  if (cat === "AI工具") setSelectedAIType("全部AI工具")
+                }}
                 className={`
                   px-3 py-1.5 rounded-full font-medium flex items-center gap-1 text-sm
                   border-transparent border-b-2 transition-all duration-100
@@ -127,8 +188,7 @@ export default function Home() {
                 `}
                 style={{ minWidth: 54 }}
               >
-                {cat === "付费资源" ? <LockClosedIcon className="w-4 h-4 mr-1" /> : null}
-                {cat !== "全部" && cat !== "付费资源" ? categoryList.find(c => c.key === cat)?.icon : null}
+                {categoryList.find(c => c.key === cat)?.icon}
                 {cat}
               </button>
             ))}
@@ -151,7 +211,6 @@ export default function Home() {
             <button className="px-4 py-1.5 rounded-full bg-blue-600 text-white font-semibold hover:bg-blue-700 text-sm flex items-center">
               <UserCircleIcon className="w-4 h-4 mr-1" /> 登录
             </button>
-            {/* 暗色按钮 */}
             <button
               onClick={() => setDark(!dark)}
               className="ml-1 rounded-full p-2 border border-transparent hover:border-blue-500 transition"
@@ -187,12 +246,38 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 二级Tab：AI工具下细分类（仅主分类选中“AI工具”时显示） */}
+      {selectedCategory === "AI工具" && (
+        <nav className="flex justify-center gap-2 mb-4">
+          {aiTypes.map(ai => (
+            <button
+              key={ai.key}
+              onClick={() => setSelectedAIType(ai.key)}
+              className={`
+                px-3 py-1.5 rounded-full font-medium flex items-center gap-1 text-sm
+                border-transparent border-b-2 transition-all duration-100
+                ${selectedAIType === ai.key
+                  ? "border-blue-500 text-blue-400 bg-blue-900/20"
+                  : `${dark ? "text-gray-400 hover:text-blue-200" : "text-gray-600 hover:text-blue-600"}`
+                }
+              `}
+            >
+              {ai.icon}
+              {ai.name}
+            </button>
+          ))}
+        </nav>
+      )}
+
       {/* 移动端分类Tab */}
       <nav className="md:hidden flex flex-wrap justify-center gap-2 mb-3">
         {categories.map(cat => (
           <button
             key={cat}
-            onClick={() => setSelectedCategory(cat)}
+            onClick={() => {
+              setSelectedCategory(cat)
+              if (cat === "AI工具") setSelectedAIType("全部AI工具")
+            }}
             className={`
               px-3 py-1.5 rounded-full font-medium flex items-center gap-1 text-sm
               border-transparent border-b-2 transition-all duration-100
@@ -202,8 +287,7 @@ export default function Home() {
               }
             `}
           >
-            {cat === "付费资源" ? <LockClosedIcon className="w-4 h-4 mr-1" /> : null}
-            {cat !== "全部" && cat !== "付费资源" ? categoryList.find(c => c.key === cat)?.icon : null}
+            {categoryList.find(c => c.key === cat)?.icon}
             {cat}
           </button>
         ))}
@@ -225,7 +309,15 @@ export default function Home() {
               >
                 <div className="flex items-center gap-2 mb-2">
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center bg-blue-800/30`}>
-                    {categoryList.find(c => c.key === tool.category)?.icon}
+                    {/* 一级/二级icon */}
+                    {tool.category === "AI工具" && tool.aiType === "AI写作" && <PencilSquareIcon className="w-5 h-5" />}
+                    {tool.category === "AI工具" && tool.aiType === "AI绘画" && <PaintBrushIcon className="w-5 h-5" />}
+                    {tool.category === "AI工具" && tool.aiType === "AI对话" && <ChatBubbleLeftRightIcon className="w-5 h-5" />}
+                    {tool.category === "AI工具" && !tool.aiType && <RocketLaunchIcon className="w-5 h-5" />}
+                    {tool.category === "破局专区" && <FireIcon className="w-5 h-5" />}
+                    {tool.category === "小说" && <BookOpenIcon className="w-5 h-5" />}
+                    {tool.category === "图片" && <PhotoIcon className="w-5 h-5" />}
+                    {tool.category === "会员专区" && <LockClosedIcon className="w-5 h-5" />}
                   </div>
                   <a
                     href={tool.url}
@@ -245,6 +337,7 @@ export default function Home() {
                 <p className={`text-xs ${textSecondary}`}>{tool.description}</p>
                 <span className={`mt-auto self-start text-xs px-2 py-0.5 rounded-full ${tagBg}`}>
                   {tool.category}
+                  {tool.category === "AI工具" && tool.aiType ? ` · ${tool.aiType}` : ""}
                 </span>
               </li>
             ))

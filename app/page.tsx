@@ -17,7 +17,6 @@ const categoryList = [
   { name: "图片", key: "图片", icon: <PhotoIcon className="w-5 h-5" /> }
 ]
 
-// 新增“付费资源”分类
 const categories = ["全部", ...categoryList.map(c => c.key), "付费资源"]
 
 const tools: Tool[] = [
@@ -76,16 +75,14 @@ const tools: Tool[] = [
 ]
 
 export default function Home() {
-  // 修正点：必须给useState明确初始值（true/false）
   const [dark, setDark] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState("全部")
   const [search, setSearch] = useState("")
 
-  // 分类过滤支持“付费资源”
   const filteredTools = tools.filter(tool => {
     let matchCat = true
     if (selectedCategory === "付费资源") {
-      matchCat = tool.isPremium === true // 这里必须明确对比true
+      matchCat = tool.isPremium === true
     } else if (selectedCategory !== "全部") {
       matchCat = tool.category === selectedCategory
     }
@@ -95,11 +92,10 @@ export default function Home() {
     return matchCat && matchSearch
   })
 
-  // 暗色模式 Tailwind 变量
+  // 只要删掉textPrimary，其它不变
   const mainBg = dark ? "bg-[#16181d]" : "bg-gray-50"
   const navBg = dark ? "bg-[#191b20]/95 border-b border-[#23242a]" : "bg-white/90 border-b border-gray-200"
   const cardBg = dark ? "bg-[#23242a] hover:bg-[#24272f]" : "bg-white hover:bg-gray-50"
-  const textPrimary = dark ? "text-white" : "text-gray-900"
   const textSecondary = dark ? "text-gray-300" : "text-gray-600"
   const tagBg = dark ? "bg-[#282c33] text-blue-200" : "bg-blue-100 text-blue-700"
   const premiumBg = dark ? "bg-yellow-600/80 text-yellow-200" : "bg-yellow-300 text-yellow-800"

@@ -450,6 +450,7 @@ export default function Home() {
             return (
               <section
                 key={group.group}
+                id={group.category} // 添加 id 属性以便锚点导航
                 ref={(el) => { 
                   sectionRefs.current[idx] = el 
                 }}

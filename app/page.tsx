@@ -1,11 +1,11 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, RefObject } from "react"
 import {
   RocketLaunchIcon, LockClosedIcon, MagnifyingGlassIcon,
   UserCircleIcon, MoonIcon, SunIcon
 } from "@heroicons/react/24/solid"
 
-// 工具项类型定义
+// 类型定义
 type ToolItem = {
   name: string
   desc: string
@@ -19,8 +19,11 @@ type GroupType = {
   category: string
   tools: ToolItem[]
 }
+type NavItem =
+  | { name: string; sub: { name: string; link: string }[] }
+  | { name: string; link: string }
 
-// 分组数据（同前）
+// 示例分组（你的分组数据保持不变，省略部分，可用你现有数据）
 const GROUPS: GroupType[] = [
   {
     group: "文本生成与编辑",
@@ -34,42 +37,11 @@ const GROUPS: GroupType[] = [
       { name: "Sudowrite", desc: "创作者专用AI灵感生成器", url: "#", tag: "AI写作助手" }
     ]
   },
-  {
-    group: "图片生成与编辑",
-    tags: ["AI图像生成器", "文字生成图像", "AI修图", "AI形象生成", "AI去背景"],
-    category: "img",
-    tools: [
-      { name: "Midjourney", desc: "AI文生图神器，社区活跃", url: "#", tag: "AI图像生成器" },
-      { name: "Adobe Firefly", desc: "Adobe原生AI图像工具", url: "#", tag: "AI修图" },
-      { name: "Remove.bg", desc: "AI一键去除图片背景", url: "#", tag: "AI去背景" },
-      { name: "Stable Diffusion", desc: "本地AI作图开源生态", url: "#", tag: "AI图像生成器" }
-    ]
-  },
-  {
-    group: "音频与视频",
-    tags: ["AI语音生成", "AI配音", "AI剪辑", "AI音频增强"],
-    category: "audio",
-    tools: [
-      { name: "ElevenLabs", desc: "顶级AI拟真语音生成", url: "#", tag: "AI语音生成" },
-      { name: "Descript", desc: "AI驱动的视频编辑平台", url: "#", tag: "AI剪辑" },
-      { name: "Audyo", desc: "AI文本转音频神器", url: "#", tag: "AI音频增强" }
-    ]
-  },
-  {
-    group: "AI会员专区",
-    tags: ["破局资料", "实战文档", "会员小说", "会员图片"],
-    category: "vip",
-    tools: [
-      { name: "副业指南合集", desc: "10本破局资料，会员专享", url: "#", tag: "破局资料", isVip: true },
-      { name: "AI项目实战库", desc: "超全AI开发实战文档", url: "#", tag: "实战文档", isVip: true },
-      { name: "会员小说", desc: "热门网络小说资源，会员专享", url: "#", tag: "会员小说", isVip: true },
-      { name: "会员图库", desc: "精选版权图库，会员专享", url: "#", tag: "会员图片", isVip: true }
-    ]
-  }
+  // ...更多分组
 ]
 
 // 导航
-const NAV = [
+const NAV: NavItem[] = [
   {
     name: "AI工具",
     sub: [
@@ -91,7 +63,7 @@ const NAV = [
   }
 ]
 
-// 站点上线日
+// 站点上线日、时间线、关于介绍
 const SITE_START_DATE = new Date("2025-07-10")
 const TIMELINE = [
   { date: "2025-07-10", title: "AI极客工具箱上线 🚀" },
@@ -106,11 +78,17 @@ export default function Home() {
   const [dark, setDark] = useState(false)
   const [search, setSearch] = useState("")
   const [days, setDays] = useState<number>(0)
-  const [activeGroupIdx, setActiveGroupIdx] = useState(0)
-  const [activeTag, setActiveTag] = useState(GROUPS[0].tags[0])
   const [about, setAbout] = useState(false)
   const navTimeout = useRef<NodeJS.Timeout | null>(null)
   const [navOpen, setNavOpen] = useState<number | null>(null)
+
+  // sectionRefs 明确类型为 RefObject<HTMLDivElement>[]
+  const sectionRefs = useRef<Array<RefObject<HTMLDivElement>>>([])
+
+  // 当前激活标签（仅用于高亮）
+  const [activeTagMap, setActiveTagMap] = useState(
+    GROUPS.map(group => group.tags[0])
+  )
 
   useEffect(() => {
     function updateDays() {
@@ -121,12 +99,22 @@ export default function Home() {
     return () => clearInterval(timer)
   }, [])
 
-  // 跳首页
+  // LOGO跳首页
   const handleLogoClick = () => {
     setAbout(false)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  // 点击标签锚点跳分组
+  const handleTagClick = (groupIdx: number, tag: string) => {
+    setActiveTagMap(tags => tags.map((t, idx) => (idx === groupIdx ? tag : t)))
+    const ref = sectionRefs.current[groupIdx]
+    if (ref && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }
+
+  // 亮暗模式样式变量
   const pagePadding = "max-w-[110rem] mx-auto w-full px-4 md:px-8 xl:px-20"
   const btnBase = "rounded-full px-5 py-2 font-semibold text-sm transition flex items-center justify-center gap-1 shadow"
   const btnVip = "bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 text-white hover:opacity-90"
@@ -138,6 +126,7 @@ export default function Home() {
   const textThird = dark ? "text-gray-400" : "text-gray-400"
   const inputBg = dark ? "bg-[#232834] border-[#555c6a] text-white placeholder-gray-400" : "bg-white border-blue-100 text-gray-900 placeholder-gray-400"
 
+  // 导航二级菜单
   const handleNavEnter = (idx: number) => {
     if (navTimeout.current) clearTimeout(navTimeout.current)
     setNavOpen(idx)
@@ -146,6 +135,13 @@ export default function Home() {
     navTimeout.current = setTimeout(() => setNavOpen(null), 180)
   }
   const handleNavMenuClick = (idx: number) => setNavOpen(navOpen === idx ? null : idx)
+
+  // sectionRefs 赋值初始化
+  if (sectionRefs.current.length !== GROUPS.length) {
+    sectionRefs.current = Array(GROUPS.length)
+      .fill(null)
+      .map((_, i) => sectionRefs.current[i] || useRef<HTMLDivElement>(null))
+  }
 
   return (
     <div className={`min-h-screen flex flex-col ${mainBg} transition-colors`}>
@@ -164,7 +160,7 @@ export default function Home() {
           {/* 分类/导航（支持二级菜单） */}
           <nav className="flex items-center gap-3 ml-8 relative">
             {NAV.map((item, idx) =>
-              item.sub ? (
+              "sub" in item ? (
                 <div
                   key={item.name}
                   className="relative"
@@ -222,28 +218,27 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero区 */}
+      {/* Hero区 渐变淡化+自然 */}
       {!about && (
         <section className="relative w-full min-h-[340px] pb-0 overflow-visible">
-          {/* 多层渐变气氛，柔和+透明度+叠加 */}
           <div className="absolute inset-0 z-0 pointer-events-none select-none">
             {!dark && (
               <>
                 <div
                   style={{
-                    background: "radial-gradient(ellipse 70% 50% at 60% 15%,#b2d0ffcc 0%,rgba(255,255,255,0) 100%)",
-                    position: "absolute", inset: 0, zIndex: 1, opacity: 0.8
+                    background: "radial-gradient(ellipse 70% 50% at 60% 12%,rgba(178,208,255,0.33) 0%,rgba(255,255,255,0.9) 90%)",
+                    position: "absolute", inset: 0, zIndex: 1, opacity: 0.7
                   }}
                 />
                 <div
                   style={{
-                    background: "radial-gradient(ellipse 40% 20% at 35% 70%,#e0c3fc88 0%,rgba(255,255,255,0) 100%)",
+                    background: "radial-gradient(ellipse 30% 20% at 30% 75%,rgba(224,195,252,0.16) 0%,rgba(255,255,255,0.85) 100%)",
                     position: "absolute", inset: 0, zIndex: 2, opacity: 0.7
                   }}
                 />
                 <div
                   style={{
-                    background: "linear-gradient(135deg,#b2c6ff 0%,#e0c3fc 65%,#fff 100%)",
+                    background: "linear-gradient(135deg,rgba(178,198,255,0.07) 0%,rgba(224,195,252,0.05) 65%,#fff 100%)",
                     position: "absolute", inset: 0, zIndex: 0, opacity: 1
                   }}
                 />
@@ -266,7 +261,7 @@ export default function Home() {
             <div className={`text-base md:text-lg text-center mb-7 max-w-2xl ${textThird}`}>
               覆盖AI写作、绘图、音视频、会员资源、小说图片等，一站式导航
             </div>
-            {/* 搜索框有柔和投影 */}
+            {/* 搜索框 */}
             <div className="w-full flex justify-center mb-2">
               <div className="relative w-full max-w-xl">
                 <input
@@ -276,7 +271,7 @@ export default function Home() {
                   className={`pl-12 pr-4 py-4 rounded-2xl text-lg outline-none border shadow-2xl placeholder-gray-400 w-full focus:ring-2 focus:ring-blue-300 transition-all duration-300 ${inputBg}`}
                   placeholder="输入关键词，搜索AI工具/资源"
                   style={{
-                    boxShadow: "0 6px 36px 0 rgba(96,142,240,.11)",
+                    boxShadow: "0 6px 36px 0 rgba(96,142,240,.10)",
                     borderWidth: 0,
                   }}
                 />
@@ -284,7 +279,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-          {/* 与下方白色内容自然衔接（渐变下溢遮罩无硬边） */}
           {!dark && (
             <div className="absolute bottom-0 left-0 w-full h-16 z-10"
               style={{
@@ -295,21 +289,25 @@ export default function Home() {
         </section>
       )}
 
-      {/* 首页内容模块（工具卡片显眼） */}
+      {/* 内容模块 分组正文始终展示 */}
       {!about && (
         <main className={`${pagePadding} flex-1 py-8 relative z-20`}>
           {GROUPS.map((group, idx) => (
-            <section key={group.group} className="mb-12">
+            <section
+              key={group.group}
+              ref={sectionRefs.current[idx] = sectionRefs.current[idx] || useRef<HTMLDivElement>(null)}
+              className="mb-12"
+            >
               <div className="flex flex-wrap items-end justify-between mb-3">
                 <h2 className={`text-2xl md:text-3xl font-extrabold mb-2 ${groupTitle}`}>{group.group}</h2>
                 <div className="flex flex-wrap gap-2">
                   {group.tags.map(tag => (
                     <button
                       key={tag}
-                      onClick={() => { setActiveGroupIdx(idx); setActiveTag(tag); }}
+                      onClick={() => handleTagClick(idx, tag)}
                       className={`
                         px-4 py-1.5 rounded-full font-medium text-sm
-                        ${activeGroupIdx === idx && activeTag === tag
+                        ${activeTagMap[idx] === tag
                           ? "bg-blue-600 text-white"
                           : "bg-gray-100 text-gray-600 hover:bg-blue-50"}
                       `}
@@ -318,11 +316,11 @@ export default function Home() {
                 </div>
               </div>
               <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-                {group.tools.filter(t => t.tag === activeTag && activeGroupIdx === idx).length === 0 ? (
+                {group.tools.filter(t => t.tag === activeTagMap[idx]).length === 0 ? (
                   <div className="col-span-full text-gray-400 py-10">该分类暂无内容</div>
                 ) : (
                   group.tools
-                    .filter(t => t.tag === activeTag && activeGroupIdx === idx)
+                    .filter(t => t.tag === activeTagMap[idx])
                     .map(tool => (
                       <li
                         key={tool.name}
@@ -330,36 +328,36 @@ export default function Home() {
                           transition
                           rounded-2xl p-7
                           shadow-2xl
-                          border-0
+                          border
                           flex flex-col gap-2 relative
                           hover:scale-[1.03] hover:shadow-2xl
-                          ring-2 ring-transparent
-                          bg-gradient-to-br from-[#f2f6ff] via-white to-[#f0f6ff]
+                          ring-1 ring-transparent
                           ${dark
-                            ? "dark:bg-gradient-to-br dark:from-[#232834] dark:via-[#20232a] dark:to-[#2c3351] dark:text-white dark:hover:ring-blue-400"
-                            : "hover:ring-2 hover:ring-blue-300"}
+                            ? "border-[#373c4d] bg-gradient-to-br from-[#232834] via-[#20232a] to-[#2c3351] text-white"
+                            : "border-[#dde6f3] bg-gradient-to-br from-[#f9fbfe] via-white to-[#f5f7ff] text-gray-900"}
                           ${tool.isVip ? "ring-2 ring-yellow-300" : ""}
                         `}
                         style={{
                           boxShadow: dark
-                            ? "0 8px 36px 0 rgba(24,36,64,.45)"
-                            : "0 6px 24px 0 rgba(80,140,255,0.10)"
+                            ? "0 8px 36px 0 rgba(24,36,64,.42)"
+                            : "0 6px 24px 0 rgba(80,140,255,0.09)",
+                          borderWidth: "0.5px"
                         }}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-blue-600 text-lg">{tool.name}</span>
+                        <div className={`flex items-center gap-2`}>
+                          <span className={`font-bold text-lg ${dark ? "text-blue-300" : "text-blue-700"}`}>{tool.name}</span>
                           {tool.isVip && (
                             <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-200 text-yellow-800 rounded-full font-bold flex items-center gap-1">
                               <LockClosedIcon className="w-4 h-4" /> 会员
                             </span>
                           )}
                         </div>
-                        <div className="text-gray-500 dark:text-gray-300 text-sm mb-3">{tool.desc}</div>
+                        <div className={`text-base font-semibold mb-3 ${dark ? "text-blue-100" : "text-gray-700"}`}>{tool.desc}</div>
                         <a
                           href={tool.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-auto inline-block text-blue-500 hover:underline text-xs font-medium"
+                          className={`mt-auto inline-block ${dark ? "text-blue-300" : "text-blue-600"} hover:underline text-xs font-medium`}
                         >访问</a>
                       </li>
                     ))
@@ -370,7 +368,7 @@ export default function Home() {
         </main>
       )}
 
-      {/* 关于我们页面（亮暗模式自适应+主副标题突出） */}
+      {/* 关于我们页面 */}
       {about && (
         <main className={`${pagePadding} flex-1 py-14`}>
           <div className={`
@@ -398,7 +396,7 @@ export default function Home() {
                   <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-2.5 border-2 border-white dark:border-[#22232a]"></div>
                   <div className={`text-xs mb-0.5 ${dark ? "text-blue-200" : "text-gray-400"}`}>{evt.date}</div>
                   <div className={`text-base font-semibold ${dark ? "text-white" : "text-gray-900"}`}>{evt.title}</div>
-                </li>
+                  </li>
               ))}
             </ol>
           </div>

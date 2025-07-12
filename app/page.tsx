@@ -113,8 +113,9 @@ export default function Home() {
   const [activeGroupIdx, setActiveGroupIdx] = useState(0)
   const [activeTag, setActiveTag] = useState(GROUPS[0].tags[0])
   const [about, setAbout] = useState(false)
-  const [navOpen, setNavOpen] = useState<number | null>(null) // 导航二级菜单
-  const navTimeout = useRef<any>(null)
+  // 修正类型
+  const navTimeout = useRef<NodeJS.Timeout | null>(null)
+  const [navOpen, setNavOpen] = useState<number | null>(null)
 
   // 实时刷新运营天数
   useEffect(() => {
@@ -129,11 +130,9 @@ export default function Home() {
   // 页边距适当缩小10-20px
   const pagePadding = "max-w-[110rem] mx-auto w-full px-4 md:px-8 xl:px-20"
 
-  // 会员按钮样式
   const btnBase = "rounded-full px-5 py-2 font-semibold text-sm transition flex items-center justify-center gap-1 shadow"
   const btnVip = "bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 text-white hover:opacity-90"
 
-  // 亮暗色适配
   const navBg = dark ? "bg-[#232834] border-b border-[#343948]" : "bg-white/90 border-b border-gray-200"
   const mainBg = dark ? "bg-[#181c22]" : "bg-white"
   const groupTitle = dark ? "text-white" : "text-gray-900"
@@ -144,7 +143,7 @@ export default function Home() {
 
   // 导航栏一级二级菜单
   const handleNavEnter = (idx: number) => {
-    clearTimeout(navTimeout.current)
+    if (navTimeout.current) clearTimeout(navTimeout.current)
     setNavOpen(idx)
   }
   const handleNavLeave = () => {
@@ -182,7 +181,7 @@ export default function Home() {
                   {navOpen === idx && (
                     <div
                       className={`absolute left-0 top-full mt-1 min-w-[100px] rounded-xl shadow-xl py-1 bg-white dark:bg-[#21232a] border border-gray-100 dark:border-gray-700 transition-all`}
-                      onMouseEnter={() => clearTimeout(navTimeout.current)}
+                      onMouseEnter={() => { if (navTimeout.current) clearTimeout(navTimeout.current) }}
                       onMouseLeave={handleNavLeave}
                     >
                       {item.sub.map(sub => (
@@ -373,7 +372,7 @@ export default function Home() {
             <div className={`mb-10 whitespace-pre-line ${textSecond}`}>{ABOUT_ME}</div>
             <h3 className="font-bold text-xl mb-4">网站大事件时间线</h3>
             <ol className="relative border-l-2 border-blue-300 dark:border-blue-700 pl-6">
-              {TIMELINE.map((evt, i) => (
+              {TIMELINE.map(evt => (
                 <li key={evt.date} className="mb-8">
                   <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-2.5 border-2 border-white dark:border-[#22232a]"></div>
                   <div className="text-xs text-gray-400 mb-0.5">{evt.date}</div>

@@ -104,8 +104,9 @@ export default function Home() {
   const [days, setDays] = useState<number>(0)
   const [about, setAbout] = useState(false)
   const [navOpen, setNavOpen] = useState<number | null>(null)
+  const [activeSection, setActiveSection] = useState(0)
   
-  // 修复：使用对象管理每个分组的活跃标签
+  // 使用对象管理每个分组的活跃标签
   const [activeTagMap, setActiveTagMap] = useState<Record<number, string>>(() => {
     const initialMap: Record<number, string> = {}
     GROUPS.forEach((group, idx) => {
@@ -114,9 +115,7 @@ export default function Home() {
     return initialMap
   })
   
-  const [activeSection, setActiveSection] = useState(0)
-  
-  // Refs - 修复类型问题
+  // Refs
   const navTimeout = useRef<NodeJS.Timeout | null>(null)
   const sectionRefs = useRef<(HTMLElement | null)[]>([])
 
@@ -132,7 +131,7 @@ export default function Home() {
     return () => clearInterval(timer)
   }, [])
 
-  // 滚动监听 - 修复类型问题
+  // 滚动监听
   useEffect(() => {
     if (about) return
     
@@ -183,13 +182,12 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  // 修改：只更新标签，不滚动页面
   const handleTagClick = (groupIdx: number, tag: string) => {
     setActiveTagMap(prev => ({
       ...prev,
       [groupIdx]: tag
     }))
-    // 移除滚动逻辑，只更新标签状态
+    // 不进行页面滚动，只更新标签状态
   }
 
   const handleNavEnter = (idx: number) => {
@@ -257,7 +255,9 @@ export default function Home() {
                 >
                   <button
                     className={`text-sm font-medium transition-colors flex items-center gap-1 ${
-                      dark ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-blue-600"
+                      (item.name === "AI工具" && activeSection >= 0 && activeSection < GROUPS.length)
+                        ? "text-blue-600 font-bold"
+                        : dark ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-blue-600"
                     }`}
                     onClick={() => handleNavMenuClick(idx)}
                   >
@@ -287,7 +287,11 @@ export default function Home() {
                           key={sub.name}
                           href={sub.link}
                           className={`block px-4 py-2 text-sm transition-colors ${
-                            dark 
+                            (sub.link === "#write" && activeSection === 0) ||
+                            (sub.link === "#image" && activeSection === 1) ||
+                            (sub.link === "#audio" && activeSection === 2)
+                              ? "text-blue-600 font-bold bg-blue-50"
+                              : dark 
                               ? "text-gray-300 hover:text-white hover:bg-gray-700" 
                               : "text-gray-700 hover:text-blue-600 hover:bg-blue-50"
                           }`}
@@ -338,6 +342,36 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* 添加右侧滚动指示器 */}
+      {!about && (
+        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 hidden lg:block">
+          <div className="flex flex-col gap-2">
+            {GROUPS.map((group, idx) => (
+              <button
+                key={group.group}
+                onClick={() => {
+                  const targetRef = sectionRefs.current[idx]
+                  if (targetRef) {
+                    targetRef.scrollIntoView({ 
+                      behavior: "smooth", 
+                      block: "start" 
+                    })
+                  }
+                }}
+                className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                  activeSection === idx 
+                    ? "bg-blue-600 scale-125" 
+                    : dark 
+                    ? "bg-gray-600 hover:bg-gray-500" 
+                    : "bg-gray-300 hover:bg-gray-400"
+                }`}
+                title={group.group}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Hero 区域 */}
       {!about && (
@@ -405,6 +439,7 @@ export default function Home() {
             return (
               <section
                 key={group.group}
+                id={group.category}
                 ref={(el) => { 
                   sectionRefs.current[idx] = el 
                 }}

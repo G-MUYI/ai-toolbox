@@ -200,8 +200,9 @@ export default function Home() {
         ))}
       </nav>
 
+      
       {/* 工具区 */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 pb-12">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 pb-12 mt-20">
         <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {filteredTools.length === 0 ? (
             <div className="col-span-full text-center text-gray-400 py-12">未找到相关资源</div>
@@ -242,6 +243,7 @@ export default function Home() {
           )}
         </ul>
       </main>
+
 
       {/* 底部栏 */}
       <footer className={`text-center text-xs py-8 mt-8 ${dark ? "text-gray-500" : "text-gray-400"}`}>

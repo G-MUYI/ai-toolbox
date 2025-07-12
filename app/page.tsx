@@ -52,27 +52,14 @@ const GROUPS: {
 // 站点上线日
 const SITE_START_DATE = new Date("2025-07-10")
 
-// 网站事件时间线数据
-const TIMELINE = [
-  { date: "2025-07-10", title: "AI极客工具箱上线 🚀" },
-  { date: "2025-07-12", title: "会员专区/破局资源首发" },
-  { date: "2025-07-13", title: "支持暗黑模式和运营天数展示" },
-  // 你可以随时添加更多事件
-]
-
-// 你的个人/站长介绍
-const ABOUT_ME = `大家好！我是木易，AI极客工具箱的创建者。
-热衷于AI工具收集与分享，致力于为开发者、自由职业者和数字创作者提供一站式AI资源导航和成长资料。希望本站能陪伴大家持续成长，有问题可随时联系我！`
-
 export default function Home() {
   const [dark, setDark] = useState(false)
   const [search, setSearch] = useState("")
   const [days, setDays] = useState<number>(0)
   const [activeGroupIdx, setActiveGroupIdx] = useState(0)
   const [activeTag, setActiveTag] = useState(GROUPS[0].tags[0])
-  const [about, setAbout] = useState(false) // 是否为关于我们页
+  const [about, setAbout] = useState(false)
 
-  // 实时刷新运营天数
   useEffect(() => {
     function updateDays() {
       setDays(Math.max(1, Math.floor((Date.now() - SITE_START_DATE.getTime()) / 86400000) + 1))
@@ -82,21 +69,21 @@ export default function Home() {
     return () => clearInterval(timer)
   }, [])
 
-  // 样式定义
+  // 统一左右大边距，但不过于窄，大气有呼吸感
+  const pagePadding = "max-w-[120rem] mx-auto w-full px-6 md:px-12 xl:px-32" // px-32约等于128px，两侧呼吸感非常大气
+
+  // 会员按钮样式
+  const btnBase = "rounded-full px-5 py-2 font-semibold text-sm transition flex items-center justify-center gap-1 shadow"
+  const btnVip = "bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 text-white hover:opacity-90"
+
+  // 亮暗色适配
   const navBg = dark ? "bg-[#232834] border-b border-[#343948]" : "bg-white/90 border-b border-gray-200"
   const mainBg = dark ? "bg-[#181c22]" : "bg-white"
   const groupTitle = dark ? "text-white" : "text-gray-900"
   const textMain = dark ? "text-white" : "text-gray-900"
   const textSecond = dark ? "text-gray-300" : "text-gray-600"
   const textThird = dark ? "text-gray-400" : "text-gray-400"
-  const inputBg = dark ? "bg-[#21252c] border-[#444d5c] text-white placeholder-gray-400" : "bg-white border-blue-200 text-gray-900 placeholder-gray-400"
-
-  // 顶部边距统一优化：max-w-6xl + 两侧 px-6 md:px-10 xl:px-20
-  const pagePadding = "max-w-6xl mx-auto w-full px-6 md:px-10 xl:px-20"
-
-  // 会员按钮样式
-  const btnBase = "rounded-full px-5 py-2 font-semibold text-sm transition flex items-center justify-center gap-1 shadow"
-  const btnVip = "bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 text-white hover:opacity-90"
+  const inputBg = dark ? "bg-[#232834] border-[#555c6a] text-white placeholder-gray-400" : "bg-white border-blue-100 text-gray-900 placeholder-gray-400"
 
   return (
     <div className={`min-h-screen flex flex-col ${mainBg} transition-colors`}>
@@ -134,71 +121,67 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero区 */}
+      {/* Hero区（大气渐变+无边框过渡） */}
       {!about && (
-        <section className={`relative w-full overflow-visible`}>
-          <div className={`absolute inset-0 z-0 ${dark ? "" : "pointer-events-none"}`}>
-            {/* 蓝紫白渐变全幅铺满 */}
-            {!dark ? (
-              <div className="w-full h-full" style={{
-                background: "linear-gradient(135deg,#a1c4fd 0%,#c2e9fb 60%,#e0c3fc 100%)",
-                width: "100%", height: "100%"
-              }} />
-            ) : null}
-          </div>
-          <div className={`${pagePadding} relative z-10 flex flex-col items-center py-14 md:py-24`}>
-            <h1 className={`font-black text-3xl md:text-5xl text-center mb-4 tracking-tight leading-snug ${textMain}`}>发现最好的AI网站和AI工具</h1>
-            <div className={`text-base md:text-lg text-center mb-2 ${textSecond}`}>
+        <section className="relative w-full min-h-[340px] pb-0 overflow-visible">
+          {/* 渐变背景 */}
+          {!dark && (
+            <div className="absolute inset-0 z-0 pointer-events-none select-none"
+              style={{
+                background: "linear-gradient(160deg, #b0c6ff 0%, #e0c3fc 60%, #ffffff 100%)",
+                boxShadow: "0 40px 80px 0 rgba(128,152,255,0.10)",
+              }}
+            />
+          )}
+          {dark && (
+            <div className="absolute inset-0 z-0 pointer-events-none select-none"
+              style={{
+                background: "linear-gradient(120deg,#232a36 0%,#20232c 100%)"
+              }}
+            />
+          )}
+          <div className={`${pagePadding} relative z-10 flex flex-col items-center pt-16 pb-14`}>
+            <h1 className={`font-black text-4xl md:text-6xl text-center mb-4 tracking-tight leading-snug ${textMain}`}>发现最好的AI网站和AI工具</h1>
+            <div className={`text-lg md:text-xl text-center mb-2 font-medium ${textSecond}`}>
               <span className="font-mono text-blue-600">{days}</span> 天持续运营 · 已收录 <span className="font-mono text-blue-600">N</span> 款工具
             </div>
-            <div className={`text-sm md:text-base text-center mb-4 ${textThird}`}>
+            <div className={`text-base md:text-lg text-center mb-6 max-w-2xl ${textThird}`}>
               覆盖AI写作、绘图、会员资源、小说图片等，一站式导航
             </div>
-            <div className="w-full flex justify-center mt-2 mb-6">
+            {/* 搜索框有柔和投影 */}
+            <div className="w-full flex justify-center mb-2">
               <div className="relative w-full max-w-xl">
                 <input
                   type="text"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className={`pl-12 pr-4 py-3 rounded-2xl text-base outline-none border shadow-md placeholder-gray-400 w-full focus:ring-2 focus:ring-blue-300 ${inputBg}`}
+                  className={`pl-12 pr-4 py-4 rounded-2xl text-lg outline-none border shadow-2xl placeholder-gray-400 w-full focus:ring-2 focus:ring-blue-300 transition-all duration-300 ${inputBg}`}
                   placeholder="输入关键词，搜索AI工具/资源"
-                  style={{ boxShadow: "0 8px 32px 0 rgba(60,130,245,.06)" }}
+                  style={{
+                    boxShadow: "0 4px 36px 0 rgba(96,142,240,.11)",
+                    borderWidth: 0,
+                  }}
                 />
-                <MagnifyingGlassIcon className="w-5 h-5 absolute left-4 top-3 text-blue-400" />
+                <MagnifyingGlassIcon className="w-6 h-6 absolute left-4 top-3 text-blue-400" />
               </div>
             </div>
           </div>
+          {/* 与下方白色内容自然衔接（用一个渐变下溢遮罩实现无硬边） */}
+          {!dark && (
+            <div className="absolute bottom-0 left-0 w-full h-16 z-10"
+              style={{
+                background: "linear-gradient(180deg, rgba(255,255,255,0.0) 0%, #fff 95%)",
+                pointerEvents: "none"
+              }} />
+          )}
         </section>
       )}
 
-      {/* 关于我们页面 */}
-      {about ? (
-        <main className={`${pagePadding} flex-1 py-10`}>
-          <h1 className={`text-3xl md:text-4xl font-bold mb-6 ${textMain}`}>关于我们</h1>
-          <section className={`mb-8 p-6 rounded-2xl shadow bg-white/80 dark:bg-[#24272e]`}>
-            <h2 className={`text-xl font-semibold mb-3 ${textMain}`}>站长介绍</h2>
-            <p className={`whitespace-pre-line text-base ${textSecond}`}>{ABOUT_ME}</p>
-          </section>
-          <section className={`p-6 rounded-2xl shadow bg-white/80 dark:bg-[#24272e]`}>
-            <h2 className={`text-xl font-semibold mb-3 ${textMain}`}>网站大事件</h2>
-            <ol className="relative border-l-2 border-blue-300 pl-5 space-y-6">
-              {TIMELINE.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <span className="block mt-1 w-3 h-3 rounded-full bg-blue-400"></span>
-                  <div>
-                    <span className="block text-xs text-blue-400">{item.date}</span>
-                    <span className={`block text-base font-medium ${textMain}`}>{item.title}</span>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
-        </main>
-      ) : (
-        // 首页工具区
-        <main className={`${pagePadding} flex-1 py-6`}>
+      {/* 首页内容模块（白色大背景+分组） */}
+      {!about && (
+        <main className={`${pagePadding} flex-1 py-8 relative z-20`}>
           {GROUPS.map((group, idx) => (
-            <section key={group.group} className="mb-10">
+            <section key={group.group} className="mb-12">
               <div className="flex flex-wrap items-end justify-between mb-3">
                 <h2 className={`text-2xl md:text-3xl font-extrabold mb-2 ${groupTitle}`}>{group.group}</h2>
                 <div className="flex flex-wrap gap-2">
@@ -216,7 +199,7 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                 {group.tools.filter(t => t.tag === activeTag && activeGroupIdx === idx).length === 0 ? (
                   <div className="col-span-full text-gray-400 py-10">该分类暂无内容</div>
                 ) : (
@@ -226,8 +209,17 @@ export default function Home() {
                       <li
                         key={tool.name}
                         className={`
-                          bg-white dark:bg-[#22242c] rounded-2xl p-6 shadow hover:shadow-lg border border-gray-100 hover:border-blue-400 transition
-                          flex flex-col gap-2 relative ${tool.isVip ? "ring-2 ring-yellow-300" : ""}
+                          transition
+                          rounded-2xl p-7
+                          shadow-xl
+                          border border-transparent
+                          flex flex-col gap-2 relative
+                          hover:scale-[1.025] hover:shadow-2xl
+                          ${dark
+                            ? "bg-[#232834] text-white hover:border-blue-400"
+                            : "bg-white text-gray-900 hover:border-blue-400"
+                          }
+                          ${tool.isVip ? "ring-2 ring-yellow-300" : ""}
                         `}
                       >
                         <div className="flex items-center gap-2">

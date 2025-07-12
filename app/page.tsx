@@ -1,51 +1,80 @@
-"use client" 
+"use client"
 import { useState, useEffect } from "react"
-import { RocketLaunchIcon, LockClosedIcon, BookOpenIcon, PhotoIcon, MagnifyingGlassIcon, UserCircleIcon, MoonIcon, SunIcon, ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid"
+import {
+  RocketLaunchIcon,
+  LockClosedIcon,
+  BookOpenIcon,
+  PhotoIcon,
+  MagnifyingGlassIcon,
+  UserCircleIcon,
+  MoonIcon,
+  SunIcon,
+  ChevronDownIcon
+} from "@heroicons/react/24/solid"
 
-type Tool = {
-  name: string
-  description: string
-  url: string
-  category: string
-  subCategory?: string
-  isPremium?: boolean
-}
-
+// 主流AI工具二级分类（部分举例，可继续扩展）
 const CATEGORY_TREE = [
-  { 
-    name: "AI工具", key: "AI工具", icon: <RocketLaunchIcon className="w-5 h-5" />, children: []
-  },
-  { 
-    name: "小说", key: "小说", icon: <BookOpenIcon className="w-5 h-5" />, children: []
-  },
-  { 
-    name: "图片", key: "图片", icon: <PhotoIcon className="w-5 h-5" />, children: []
-  },
-  { 
-    name: "会员专区", key: "会员专区", icon: <LockClosedIcon className="w-5 h-5" />, 
+  {
+    name: "AI工具",
+    key: "AI工具",
+    icon: <RocketLaunchIcon className="w-5 h-5" />,
     children: [
-      { name: "破局资料", key: "破局资料" },
-      // 可添加更多会员子类
+      { name: "对话/聊天", key: "chat" },
+      { name: "绘画/图片生成", key: "img" },
+      { name: "写作/文案", key: "write" },
+      { name: "PPT/演示", key: "ppt" },
+      { name: "视频/配音", key: "media" },
+      { name: "办公助手", key: "office" },
+      { name: "数据/知识", key: "data" },
+      { name: "代码/开发", key: "code" },
+      { name: "营销/SEO", key: "seo" },
+      { name: "AI搜索", key: "search" },
+      { name: "效率/其他", key: "misc" }
+    ]
+  },
+  {
+    name: "小说",
+    key: "小说",
+    icon: <BookOpenIcon className="w-5 h-5" />,
+    children: []
+  },
+  {
+    name: "图片",
+    key: "图片",
+    icon: <PhotoIcon className="w-5 h-5" />,
+    children: []
+  },
+  {
+    name: "会员专区",
+    key: "会员专区",
+    icon: <LockClosedIcon className="w-5 h-5" />,
+    children: [
+      { name: "破局资料", key: "break" }
     ]
   }
 ]
 
-const tools: Tool[] = [
-  { name: "ChatGPT", description: "OpenAI出品的AI聊天工具，支持多语言交互。", url: "https://chat.openai.com", category: "AI工具" },
-  { name: "Midjourney", description: "AI图像生成平台，创意与艺术设计首选。", url: "https://midjourney.com", category: "AI工具", isPremium: true },
-  { name: "《折腰》by 蓬莱客", description: "经典古言小说，文笔细腻，剧情跌宕。", url: "#", category: "小说" },
-  { name: "插画壁纸包", description: "100+精美插画壁纸，适合桌面、创作参考。", url: "#", category: "图片" },
-  // 会员专区 > 破局资料
-  { name: "副业指南合集", description: "10本副业破局电子书，助你构建副业思维。", url: "#", category: "会员专区", subCategory: "破局资料", isPremium: true },
-  { name: "搞钱计划模板", description: "高效搞钱SOP文档，适合个人IP、短视频起号。", url: "#", category: "会员专区", subCategory: "破局资料", isPremium: true },
+// 示例资源
+const tools = [
+  { name: "ChatGPT", description: "强大的AI对话工具", url: "#", category: "AI工具", subCategory: "chat" },
+  { name: "Midjourney", description: "AI绘画生成平台", url: "#", category: "AI工具", subCategory: "img" },
+  { name: "Notion AI", description: "AI助力写作/知识管理", url: "#", category: "AI工具", subCategory: "write" },
+  { name: "AI PPT", description: "AI一键生成PPT", url: "#", category: "AI工具", subCategory: "ppt" },
+  { name: "AiVoice", description: "AI配音合成工具", url: "#", category: "AI工具", subCategory: "media" },
+  { name: "GitHub Copilot", description: "AI代码自动补全", url: "#", category: "AI工具", subCategory: "code" },
+  { name: "SEO AI", description: "AI驱动SEO内容", url: "#", category: "AI工具", subCategory: "seo" },
+  { name: "《折腰》by 蓬莱客", description: "经典古言小说", url: "#", category: "小说" },
+  { name: "插画壁纸包", description: "精选AI插画壁纸", url: "#", category: "图片" },
+  { name: "副业指南合集", description: "10本破局资料，会员专享", url: "#", category: "会员专区", subCategory: "break", isPremium: true }
 ]
 
-const SITE_START_DATE = new Date("2024-06-01") // 你的建站日
+const SITE_START_DATE = new Date("2024-06-01")
 
 export default function Home() {
-  const [dark, setDark] = useState(true)
-  const [selectedCat, setSelectedCat] = useState<string>("全部")
-  const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const [dark, setDark] = useState(false)
+  const [selectedCat, setSelectedCat] = useState<string | null>(null) // 一级分类
+  const [selectedSubCat, setSelectedSubCat] = useState<string | null>(null) // 二级分类
+  const [hoverMenu, setHoverMenu] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [days, setDays] = useState<number>(0)
 
@@ -53,82 +82,93 @@ export default function Home() {
     setDays(Math.floor((Date.now() - SITE_START_DATE.getTime()) / 86400000))
   }, [])
 
-  // 工具筛选
+  // 筛选工具
   const filteredTools = tools.filter(tool => {
-    const catMatch = selectedCat === "全部"
-      || tool.category === selectedCat
-      || (selectedCat.includes("-") && (`${tool.category}-${tool.subCategory}` === selectedCat))
-    const searchMatch = tool.name.toLowerCase().includes(search.toLowerCase()) || tool.description.toLowerCase().includes(search.toLowerCase())
-    return catMatch && searchMatch
+    let matchCat =
+      (selectedCat === null) ||
+      (tool.category === selectedCat && (!selectedSubCat || tool.subCategory === selectedSubCat))
+    // 没选分类时默认全显示
+    if (selectedCat && !CATEGORY_TREE.find(c => c.key === selectedCat)?.children.length) {
+      // 该分类无二级分类
+      matchCat = tool.category === selectedCat
+    }
+    const searchMatch =
+      tool.name.toLowerCase().includes(search.toLowerCase()) ||
+      tool.description.toLowerCase().includes(search.toLowerCase())
+    return matchCat && searchMatch
   })
 
-  // 暗色样式变量
-  const mainBg = dark ? "bg-[#16181d]" : "bg-gray-50"
-  const navBg = dark ? "bg-[#191b20]/95 border-b border-[#23242a]" : "bg-white/90 border-b border-gray-200"
-  const cardBg = dark ? "bg-[#23242a] hover:bg-[#24272f]" : "bg-white hover:bg-gray-50"
+  // 样式变量
+  const mainBg = dark ? "bg-[#181c22]" : "bg-gray-50"
+  const navBg = dark ? "bg-[#232834] border-b border-[#343948]" : "bg-white/90 border-b border-gray-200"
+  const cardBg = dark ? "bg-[#262a31] hover:bg-[#232a36]" : "bg-white hover:bg-blue-50"
   const textSecondary = dark ? "text-gray-300" : "text-gray-600"
   const tagBg = dark ? "bg-[#282c33] text-blue-200" : "bg-blue-100 text-blue-700"
   const premiumBg = dark ? "bg-yellow-600/80 text-yellow-200" : "bg-yellow-300 text-yellow-800"
   const searchBg = dark ? "bg-[#23242a] border-[#33353a] text-white" : "bg-gray-100 border-gray-300 text-gray-900"
 
+  // Hero渐变背景亮色修正
+  const heroBg = dark
+    ? "bg-gradient-to-r from-blue-800 via-indigo-900 to-gray-900"
+    : "bg-gradient-to-r from-blue-400 via-purple-200 to-white"
+
   return (
     <div className={`min-h-screen flex flex-col ${mainBg} transition-colors duration-200`}>
-      {/* 顶部导航+分类二级菜单 */}
+      {/* 顶部导航+分类 */}
       <header className={`sticky top-0 z-30 w-full ${navBg} transition-all`}>
         <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-4 md:px-8">
-          {/* LOGO */}
-          <div className="flex items-center gap-2 font-bold text-2xl text-blue-400">
+          <div className="flex items-center gap-2 font-bold text-2xl text-blue-500">
             <RocketLaunchIcon className="w-7 h-7" />
             <span>AI极客工具箱</span>
           </div>
-          {/* 分类Tab/二级菜单 */}
-          <nav className="hidden md:flex items-center gap-1 ml-10">
-            <button
-              onClick={() => { setSelectedCat("全部"); setOpenMenu(null); }}
-              className={`
-                px-4 py-1.5 rounded-full font-medium text-sm transition
-                ${selectedCat === "全部" ? "bg-blue-700 text-white" : (dark ? "text-gray-400 hover:text-blue-200" : "text-gray-600 hover:text-blue-600")}
-              `}
-            >全部</button>
+          {/* 分类Tab+悬停二级 */}
+          <nav className="flex items-center gap-1 ml-8">
             {CATEGORY_TREE.map(cat => (
-              cat.children.length > 0 ? (
-                <div key={cat.key} className="relative">
-                  <button
-                    className={`
-                      px-4 py-1.5 rounded-full font-medium text-sm flex items-center gap-1 transition
-                      ${selectedCat.startsWith(cat.key) ? "bg-blue-700 text-white" : (dark ? "text-gray-400 hover:text-blue-200" : "text-gray-600 hover:text-blue-600")}
-                    `}
-                    onClick={() => setOpenMenu(openMenu === cat.key ? null : cat.key)}
-                  >
-                    {cat.icon}{cat.name}
-                    {openMenu === cat.key ? <ChevronDownIcon className="w-4 h-4 ml-1" /> : <ChevronRightIcon className="w-4 h-4 ml-1" />}
-                  </button>
-                  {/* 二级菜单 */}
-                  {openMenu === cat.key &&
-                    <div className={`absolute left-0 top-11 min-w-[130px] rounded-xl shadow-lg ${dark ? "bg-[#22252a]" : "bg-white"} z-50`}>
-                      {cat.children.map(child => (
-                        <button
-                          key={child.key}
-                          onClick={() => { setSelectedCat(`${cat.key}-${child.key}`); setOpenMenu(null); }}
-                          className={`
-                            px-5 py-2 w-full text-left rounded-xl font-normal text-sm
-                            ${selectedCat === `${cat.key}-${child.key}` ? "bg-blue-700 text-white" : (dark ? "text-gray-300 hover:bg-[#292c30]" : "text-gray-700 hover:bg-blue-100")}
-                          `}
-                        >{child.name}</button>
-                      ))}
-                    </div>
-                  }
-                </div>
-              ) : (
+              <div
+                key={cat.key}
+                className="relative group"
+                onMouseEnter={() => setHoverMenu(cat.key)}
+                onMouseLeave={() => setHoverMenu(null)}
+              >
                 <button
-                  key={cat.key}
-                  onClick={() => { setSelectedCat(cat.key); setOpenMenu(null); }}
                   className={`
-                    px-4 py-1.5 rounded-full font-medium text-sm flex items-center gap-1 transition
-                    ${selectedCat === cat.key ? "bg-blue-700 text-white" : (dark ? "text-gray-400 hover:text-blue-200" : "text-gray-600 hover:text-blue-600")}
+                    px-4 py-2 rounded-full font-medium text-sm flex items-center gap-1 transition
+                    ${selectedCat === cat.key ? "bg-blue-600 text-white" : dark ? "text-gray-300 hover:text-blue-200" : "text-gray-600 hover:text-blue-700"}
                   `}
-                >{cat.icon}{cat.name}</button>
-              )
+                  onClick={() => {
+                    setSelectedCat(cat.key)
+                    setSelectedSubCat(null)
+                  }}
+                >
+                  {cat.icon}
+                  {cat.name}
+                  {cat.children.length > 0 && (
+                    <ChevronDownIcon className="w-4 h-4 ml-1" />
+                  )}
+                </button>
+                {/* 二级菜单 */}
+                {cat.children.length > 0 && hoverMenu === cat.key && (
+                  <div className={`absolute left-0 top-full mt-2 min-w-[160px] rounded-xl shadow-lg ${dark ? "bg-[#232834]" : "bg-white"} z-50 border border-gray-100`}>
+                    {cat.children.map(sub => (
+                      <button
+                        key={sub.key}
+                        onClick={() => {
+                          setSelectedCat(cat.key)
+                          setSelectedSubCat(sub.key)
+                        }}
+                        className={`
+                          block px-5 py-2 w-full text-left rounded-xl font-normal text-sm
+                          ${selectedCat === cat.key && selectedSubCat === sub.key
+                            ? "bg-blue-600 text-white"
+                            : dark
+                              ? "text-gray-200 hover:bg-[#252d3c]"
+                              : "text-gray-700 hover:bg-blue-50"}
+                        `}
+                      >{sub.name}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </nav>
           {/* 搜索/登录/暗色 */}
@@ -157,16 +197,14 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero区 渐变色 */}
+      {/* Hero区，亮色渐变背景 */}
       <section className={`w-full flex flex-col items-center justify-center py-14 md:py-20 relative`}>
-        <div className="absolute inset-0 -z-10">
-          <div className="w-full h-full bg-gradient-to-r from-blue-700 via-indigo-900 to-gray-900 opacity-85"></div>
-        </div>
+        <div className={`absolute inset-0 -z-10 ${heroBg}`}></div>
         <h1 className="font-extrabold text-4xl md:text-6xl mb-3 text-white text-center drop-shadow tracking-tight leading-tight">
           AI极客工具箱
         </h1>
         <p className="mb-4 text-center text-base md:text-lg font-medium text-blue-100">
-          收录AI工具、会员专区资料、小说、图片等极客精选资源，一站式导航，随心探索！
+          收录AI工具、主流细分分类、会员资料、小说、图片等极客精选资源，一站式导航，随心探索！
         </p>
         <div className="w-full flex justify-center mt-1">
           <div className="relative w-full max-w-xs">
@@ -175,62 +213,12 @@ export default function Home() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pl-9 pr-3 py-2 rounded-full text-sm outline-none border bg-white/90 border-blue-300 placeholder-gray-400 w-full shadow"
-              placeholder="搜索AI/小说/图片"
+              placeholder="搜索AI工具/分类/关键词"
             />
             <MagnifyingGlassIcon className="w-5 h-5 absolute left-2 top-2 text-blue-500" />
           </div>
         </div>
       </section>
-
-      {/* 移动端分类 */}
-      <nav className="md:hidden flex flex-wrap justify-center gap-2 mb-3">
-        <button
-          onClick={() => { setSelectedCat("全部"); setOpenMenu(null); }}
-          className={`
-            px-4 py-1.5 rounded-full font-medium text-sm transition
-            ${selectedCat === "全部" ? "bg-blue-700 text-white" : (dark ? "text-gray-400 hover:text-blue-200" : "text-gray-600 hover:text-blue-600")}
-          `}
-        >全部</button>
-        {CATEGORY_TREE.map(cat => (
-          cat.children.length > 0 ? (
-            <div key={cat.key} className="relative">
-              <button
-                className={`
-                  px-4 py-1.5 rounded-full font-medium text-sm flex items-center gap-1 transition
-                  ${selectedCat.startsWith(cat.key) ? "bg-blue-700 text-white" : (dark ? "text-gray-400 hover:text-blue-200" : "text-gray-600 hover:text-blue-600")}
-                `}
-                onClick={() => setOpenMenu(openMenu === cat.key ? null : cat.key)}
-              >
-                {cat.icon}{cat.name}
-                {openMenu === cat.key ? <ChevronDownIcon className="w-4 h-4 ml-1" /> : <ChevronRightIcon className="w-4 h-4 ml-1" />}
-              </button>
-              {openMenu === cat.key &&
-                <div className={`absolute left-0 top-11 min-w-[120px] rounded-xl shadow-lg ${dark ? "bg-[#22252a]" : "bg-white"} z-50`}>
-                  {cat.children.map(child => (
-                    <button
-                      key={child.key}
-                      onClick={() => { setSelectedCat(`${cat.key}-${child.key}`); setOpenMenu(null); }}
-                      className={`
-                        px-4 py-2 w-full text-left rounded-xl font-normal text-sm
-                        ${selectedCat === `${cat.key}-${child.key}` ? "bg-blue-700 text-white" : (dark ? "text-gray-300 hover:bg-[#292c30]" : "text-gray-700 hover:bg-blue-100")}
-                      `}
-                    >{child.name}</button>
-                  ))}
-                </div>
-              }
-            </div>
-          ) : (
-            <button
-              key={cat.key}
-              onClick={() => { setSelectedCat(cat.key); setOpenMenu(null); }}
-              className={`
-                px-4 py-1.5 rounded-full font-medium text-sm flex items-center gap-1 transition
-                ${selectedCat === cat.key ? "bg-blue-700 text-white" : (dark ? "text-gray-400 hover:text-blue-200" : "text-gray-600 hover:text-blue-600")}
-              `}
-            >{cat.icon}{cat.name}</button>
-          )
-        ))}
-      </nav>
 
       {/* 工具区 */}
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 pb-12">
@@ -254,7 +242,7 @@ export default function Home() {
                     href={tool.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`text-base font-bold hover:underline ${dark ? "text-blue-200" : "text-blue-600"}`}
+                    className={`text-base font-bold hover:underline ${dark ? "text-blue-200" : "text-blue-700"}`}
                   >
                     {tool.name}
                   </a>
@@ -267,7 +255,9 @@ export default function Home() {
                 </div>
                 <p className={`text-xs ${textSecondary}`}>{tool.description}</p>
                 <span className={`mt-auto self-start text-xs px-2 py-0.5 rounded-full ${tagBg}`}>
-                  {tool.subCategory ? tool.subCategory : tool.category}
+                  {tool.subCategory
+                    ? CATEGORY_TREE.find(c => c.key === tool.category)?.children.find(sub => sub.key === tool.subCategory)?.name || tool.subCategory
+                    : tool.category}
                 </span>
               </li>
             ))

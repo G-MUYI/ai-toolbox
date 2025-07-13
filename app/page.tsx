@@ -113,7 +113,8 @@ const ABOUT_ME = `大家好！我是木易，AI极客工具箱的创建者。
 热衷于AI工具收集与分享，致力于为开发者、自由职业者和数字创作者提供一站式AI资源导航和成长资料。本站长期维护更新，欢迎加入共建！`
 
 // ----------------- 工具卡片组件 ----------------
-export function ToolCard({
+// 移除了 export 关键字
+function ToolCard({
   tool,
   dark,
   isLoggedIn,
@@ -210,7 +211,8 @@ export function ToolCard({
 }
 
 // ----------------- 登录组件 ----------------
-export function LoginForm({ onLogin }: { onLogin: (isAdmin: boolean) => void }) {
+// 移除了 export 关键字
+function LoginForm({ onLogin }: { onLogin: (isAdmin: boolean) => void }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
 
@@ -261,7 +263,8 @@ export function LoginForm({ onLogin }: { onLogin: (isAdmin: boolean) => void }) 
 }
 
 // ----------------- 工具管理表单组件 ----------------
-export function ToolManager({
+// 移除了 export 关键字
+function ToolManager({
   groups,
   onAddTool,
   onUpdateTool,

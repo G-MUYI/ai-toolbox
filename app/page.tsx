@@ -12,7 +12,6 @@ import {
   CogIcon,
   // Heroicons v2 中把 LogoutIcon 改名为 ArrowLeftOnRectangleIcon
   ArrowLeftOnRectangleIcon as LogoutIcon,
-  CheckIcon,
   XMarkIcon
 } from "@heroicons/react/24/solid"
 
@@ -266,14 +265,12 @@ export function ToolManager({
   groups,
   onAddTool,
   onUpdateTool,
-  onDeleteTool,
   editingTool,
   setEditingTool
 }: {
   groups: GroupType[]
   onAddTool: (tool: ToolItem) => void
   onUpdateTool: (tool: ToolItem) => void
-  onDeleteTool: (tool: ToolItem) => void
   editingTool: ToolItem | null
   setEditingTool: (tool: ToolItem | null) => void
 }) {
@@ -626,7 +623,6 @@ export default function Home() {
           groups={groups}
           onAddTool={handleAddTool}
           onUpdateTool={handleUpdateTool}
-          onDeleteTool={handleDeleteTool}
           editingTool={editingTool}
           setEditingTool={setEditingTool}
         />

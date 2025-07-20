@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// AI工具主表
+model AiTool {
+  id          String   @id @default(cuid())
+  name        String   // 工具名称
+  description String   // 工具描述
+  url         String   // 工具链接
+  logoUrl     String?  // Logo图片链接
+  category    String   // 主分类
+  subCategory String?  // 子分类
+  tags        String   // 标签，用逗号分隔
+  pricing     String   // 定价类型：free/freemium/paid
+  verified    Boolean  @default(false) // 是否验证过
+  featured    Boolean  @default(false) // 是否推荐
+  visits      Int      @default(0) // 访问次数
+  rating      Float?   // 评分
+  sourceUrl   String   // 抓取来源URL
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([name, url]) // 防止重复
+}
+
+// 分类表
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique // 分类名称
+  nameZh      String   // 中文名称
+  description String?  // 分类描述
+  icon        String?  // 分类图标
+  order       Int      @default(0) // 排序
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 抓取日志表
+model ScrapingLog {
+  id          String   @id @default(cuid())
+  source      String   // 抓取来源
+  status      String   // success/failed/partial
+  itemsFound  Int      @default(0) // 发现的条目数
+  itemsAdded  Int      @default(0) // 新增的条目数
+  itemsUpdated Int     @default(0) // 更新的条目数
+  errorMsg    String?  // 错误信息
+  duration    Int?     // 耗时（秒）
+  createdAt   DateTime @default(now())
+}

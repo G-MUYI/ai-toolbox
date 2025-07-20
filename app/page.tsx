@@ -7,6 +7,7 @@ import {
 
 // ----------------- 类型定义 ----------------
 type ToolItem = {
+  id?: number
   name: string
   desc: string
   url: string
@@ -25,50 +26,16 @@ type NavItem =
   | { name: string; sub: { name: string; link: string }[] }
   | { name: string; link: string }
 
-// ----------------- 示例数据 ----------------
-const GROUPS: GroupType[] = [
-  {
-    group: "文本生成与编辑",
-    tags: ["AI写作助手", "AI智能摘要", "AI文案生成", "AI博客生成", "AI文案写作"],
-    category: "write",
-    tools: [
-      { name: "ChatGPT", desc: "最火爆的AI对话/写作助手", url: "https://chat.openai.com", tag: "AI写作助手" },
-      { name: "Grammarly", desc: "AI语法纠正、润色", url: "https://grammarly.com", tag: "AI文案写作" },
-      { name: "QuillBot", desc: "AI自动改写与润色", url: "https://quillbot.com", tag: "AI文案写作" },
-      { name: "Notion AI", desc: "AI智能文档写作和头脑风暴", url: "https://notion.so", tag: "AI智能摘要" },
-      { name: "Sudowrite", desc: "创作者专用AI灵感生成器", url: "https://sudowrite.com", tag: "AI写作助手", isVip: true }
-    ]
-  },
-  {
-    group: "图像生成与编辑",
-    tags: ["AI绘画", "图像处理", "设计工具", "照片编辑"],
-    category: "image",
-    tools: [
-      { name: "Midjourney", desc: "顶级AI绘画工具", url: "https://midjourney.com", tag: "AI绘画", isVip: true },
-      { name: "DALL-E", desc: "OpenAI的图像生成AI", url: "https://openai.com/dall-e-2", tag: "AI绘画" },
-      { name: "Stable Diffusion", desc: "开源AI图像生成", url: "https://stability.ai", tag: "AI绘画" },
-      { name: "Canva AI", desc: "AI设计助手", url: "https://canva.com", tag: "设计工具" }
-    ]
-  },
-  {
-    group: "音频与视频",
-    tags: ["AI配音", "视频编辑", "音频处理", "语音合成"],
-    category: "audio",
-    tools: [
-      { name: "Murf", desc: "AI语音生成器", url: "https://murf.ai", tag: "AI配音" },
-      { name: "Descript", desc: "AI视频编辑工具", url: "https://descript.com", tag: "视频编辑" },
-      { name: "Speechify", desc: "文本转语音工具", url: "https://speechify.com", tag: "语音合成" }
-    ]
-  }
-]
-
+// ----------------- 导航配置 ----------------
 const NAV: NavItem[] = [
   {
     name: "AI工具",
     sub: [
       { name: "写作", link: "#write" },
       { name: "图片", link: "#image" },
-      { name: "音频视频", link: "#audio" }
+      { name: "音频视频", link: "#audio" },
+      { name: "代码开发", link: "#code" },
+      { name: "其他工具", link: "#other" }
     ]
   },
   {
@@ -91,6 +58,7 @@ const TIMELINE = [
   { date: "2024-01-12", title: "会员专区/破局资源首发" },
   { date: "2024-01-13", title: "支持暗黑模式和运营天数展示" },
   { date: "2024-01-15", title: "支持二级菜单与时间线" },
+  { date: "2024-01-20", title: "集成自动化数据抓取功能" },
 ]
 
 const ABOUT_ME = `大家好！我是木易，AI极客工具箱的创建者。
@@ -105,19 +73,52 @@ export default function Home() {
   const [about, setAbout] = useState(false)
   const [navOpen, setNavOpen] = useState<number | null>(null)
   const [activeSection, setActiveSection] = useState(0)
+  const [groups, setGroups] = useState<GroupType[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [lastUpdate, setLastUpdate] = useState<string>("")
   
   // 使用对象管理每个分组的活跃标签
-  const [activeTagMap, setActiveTagMap] = useState<Record<number, string>>(() => {
-    const initialMap: Record<number, string> = {}
-    GROUPS.forEach((group, idx) => {
-      initialMap[idx] = group.tags[0] || ""
-    })
-    return initialMap
-  })
+  const [activeTagMap, setActiveTagMap] = useState<Record<number, string>>({})
   
   // Refs
   const navTimeout = useRef<NodeJS.Timeout | null>(null)
   const sectionRefs = useRef<(HTMLElement | null)[]>([])
+
+  // 加载工具数据
+  useEffect(() => {
+    async function loadTools() {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/tools')
+        if (!response.ok) {
+          throw new Error('Failed to fetch tools')
+        }
+        const data = await response.json()
+        
+        if (data.success) {
+          setGroups(data.data.groups)
+          setLastUpdate(data.data.lastUpdate)
+          
+          // 初始化每个分组的活跃标签
+          const initialMap: Record<number, string> = {}
+          data.data.groups.forEach((group: GroupType, idx: number) => {
+            initialMap[idx] = group.tags[0] || ""
+          })
+          setActiveTagMap(initialMap)
+        } else {
+          setError(data.error || '加载数据失败')
+        }
+      } catch (err) {
+        setError('网络错误，请稍后重试')
+        console.error('加载工具数据失败:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadTools()
+  }, [])
 
   // 计算运营天数
   useEffect(() => {
@@ -133,7 +134,7 @@ export default function Home() {
 
   // 滚动监听
   useEffect(() => {
-    if (about) return
+    if (about || loading) return
     
     function onScroll() {
       const scrollY = window.scrollY + 120
@@ -150,15 +151,15 @@ export default function Home() {
     
     window.addEventListener("scroll", onScroll)
     return () => window.removeEventListener("scroll", onScroll)
-  }, [about])
+  }, [about, loading])
 
   // 搜索自动定位
   useEffect(() => {
-    if (!search.trim()) return
+    if (!search.trim() || loading) return
     
     const searchLower = search.toLowerCase()
-    for (let i = 0; i < GROUPS.length; i++) {
-      const hasMatch = GROUPS[i].tools.some(tool =>
+    for (let i = 0; i < groups.length; i++) {
+      const hasMatch = groups[i].tools.some(tool =>
         tool.name.toLowerCase().includes(searchLower) || 
         tool.desc.toLowerCase().includes(searchLower)
       )
@@ -174,7 +175,34 @@ export default function Home() {
         break
       }
     }
-  }, [search])
+  }, [search, groups, loading])
+
+  // 手动刷新数据
+  const handleRefreshData = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/scrape')
+      const result = await response.json()
+      
+      if (result.success) {
+        // 重新加载数据
+        const toolsResponse = await fetch('/api/tools')
+        const toolsData = await toolsResponse.json()
+        
+        if (toolsData.success) {
+          setGroups(toolsData.data.groups)
+          setLastUpdate(toolsData.data.lastUpdate)
+          alert(`数据更新成功！\n新增: ${result.data.itemsAdded} 个工具\n更新: ${result.data.itemsUpdated} 个工具`)
+        }
+      } else {
+        alert('数据更新失败: ' + result.error)
+      }
+    } catch (err) {
+      alert('数据更新失败，请稍后重试')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // 事件处理函数
   const handleLogoClick = () => {
@@ -187,7 +215,6 @@ export default function Home() {
       ...prev,
       [groupIdx]: tag
     }))
-    // 不进行页面滚动，只更新标签状态
   }
 
   const handleNavEnter = (idx: number) => {
@@ -227,6 +254,9 @@ export default function Home() {
     ? "bg-gray-800 border-gray-600 text-white placeholder-gray-400" 
     : "bg-white border-gray-200 text-gray-900 placeholder-gray-500"
 
+  // 计算总工具数量
+  const totalTools = groups.reduce((sum, group) => sum + group.tools.length, 0)
+
   return (
     <div className={`min-h-screen ${mainBg} transition-colors duration-300`}>
       {/* 导航栏 */}
@@ -255,7 +285,7 @@ export default function Home() {
                 >
                   <button
                     className={`text-sm font-medium transition-colors flex items-center gap-1 ${
-                      (item.name === "AI工具" && activeSection >= 0 && activeSection < GROUPS.length)
+                      (item.name === "AI工具" && activeSection >= 0 && activeSection < groups.length)
                         ? "text-blue-600 font-bold"
                         : dark ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-blue-600"
                     }`}
@@ -287,11 +317,7 @@ export default function Home() {
                           key={sub.name}
                           href={sub.link}
                           className={`block px-4 py-2 text-sm transition-colors ${
-                            (sub.link === "#write" && activeSection === 0) ||
-                            (sub.link === "#image" && activeSection === 1) ||
-                            (sub.link === "#audio" && activeSection === 2)
-                              ? "text-blue-600 font-bold bg-blue-50"
-                              : dark 
+                            dark 
                               ? "text-gray-300 hover:text-white hover:bg-gray-700" 
                               : "text-gray-700 hover:text-blue-600 hover:bg-blue-50"
                           }`}
@@ -318,6 +344,19 @@ export default function Home() {
 
           {/* 右侧按钮组 */}
           <div className="flex items-center gap-3">
+            {/* 数据刷新按钮 */}
+            <button 
+              onClick={handleRefreshData}
+              disabled={loading}
+              className={`${btnBase} bg-green-100 hover:bg-green-200 text-green-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title="刷新数据"
+            >
+              <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="hidden sm:inline">{loading ? '更新中...' : '刷新数据'}</span>
+            </button>
+            
             <button className={`${btnBase} bg-blue-100 hover:bg-blue-200 text-blue-700`}>
               <UserCircleIcon className="w-4 h-4" />
               <span className="hidden sm:inline">登录</span>
@@ -344,10 +383,10 @@ export default function Home() {
       </header>
 
       {/* 添加右侧滚动指示器 */}
-      {!about && (
+      {!about && !loading && (
         <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 hidden lg:block">
           <div className="flex flex-col gap-2">
-            {GROUPS.map((group, idx) => (
+            {groups.map((group, idx) => (
               <button
                 key={group.group}
                 onClick={() => {
@@ -403,11 +442,17 @@ export default function Home() {
               
               <div className={`text-lg sm:text-xl mb-4 ${textSecond}`}>
                 <span className="font-mono text-blue-600 font-bold">{days}</span> 天持续运营 · 
-                已收录 <span className="font-mono text-blue-600 font-bold">{GROUPS.reduce((sum, group) => sum + group.tools.length, 0)}</span> 款工具
+                已收录 <span className="font-mono text-blue-600 font-bold">{totalTools}</span> 款工具
               </div>
               
+              {lastUpdate && (
+                <div className={`text-sm mb-6 ${textThird}`}>
+                  最后更新：{new Date(lastUpdate).toLocaleString('zh-CN')}
+                </div>
+              )}
+              
               <p className={`text-base sm:text-lg mb-8 max-w-2xl mx-auto ${textThird}`}>
-                覆盖AI写作、绘图、音视频、会员资源等领域，一站式AI工具导航
+                覆盖AI写作、绘图、音视频、代码开发等领域，自动化抓取最新AI工具
               </p>
 
               {/* 搜索框 */}
@@ -419,6 +464,7 @@ export default function Home() {
                     onChange={(e) => setSearch(e.target.value)}
                     className={`w-full pl-12 pr-4 py-4 rounded-2xl text-lg border-2 outline-none transition-all duration-300 ${inputBg} focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20`}
                     placeholder="搜索 AI 工具..."
+                    disabled={loading}
                   />
                   <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-blue-500" />
                 </div>
@@ -428,10 +474,41 @@ export default function Home() {
         </section>
       )}
 
-      {/* 工具分组展示 */}
-      {!about && (
+      {/* 加载状态 */}
+      {loading && !about && (
         <main className={`${pagePadding} py-12`}>
-          {GROUPS.map((group, idx) => {
+          <div className="text-center">
+            <div className="inline-flex items-center gap-3 text-lg text-blue-600">
+              <svg className="animate-spin w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              正在加载AI工具数据...
+            </div>
+          </div>
+        </main>
+      )}
+
+      {/* 错误状态 */}
+      {error && !about && (
+        <main className={`${pagePadding} py-12`}>
+          <div className="text-center">
+            <div className={`text-lg mb-4 ${textMain}`}>
+              加载失败: {error}
+            </div>
+            <button 
+              onClick={() => window.location.reload()}
+              className={`${btnBase} bg-blue-600 hover:bg-blue-700 text-white`}
+            >
+              重新加载
+            </button>
+          </div>
+        </main>
+      )}
+
+      {/* 工具分组展示 */}
+      {!about && !loading && !error && (
+        <main className={`${pagePadding} py-12`}>
+          {groups.map((group, idx) => {
             const activeTag = activeTagMap[idx] || group.tags[0] || ""
             const filteredByTag = group.tools.filter(tool => tool.tag === activeTag)
             const finalTools = getFilteredTools(filteredByTag)
@@ -481,7 +558,7 @@ export default function Home() {
                   ) : (
                     finalTools.map((tool) => (
                       <div
-                        key={tool.name}
+                        key={tool.id || tool.name}
                         className={`group relative p-6 rounded-xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
                           dark
                             ? "bg-gray-800 border-gray-700 hover:border-gray-600"
@@ -567,7 +644,7 @@ export default function Home() {
                       <div className={`text-sm mb-1 ${textThird}`}>
                         {event.date}
                       </div>
-                      <div className={`text-base font-semibold ${textMain}`}>
+                      <div className={`text-lg font-semibold ${textMain}`}>
                         {event.title}
                       </div>
                     </div>
@@ -575,18 +652,49 @@ export default function Home() {
                 ))}
               </div>
             </div>
+
+            <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+              <div className="text-center">
+                <p className={`text-sm ${textThird} mb-4`}>
+                  AI极客工具箱 · 让AI工具触手可及
+                </p>
+               <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                  <button 
+                    className={`${btnBase} bg-blue-600 hover:bg-blue-700 text-white`}
+                    onClick={() => setAbout(false)}
+                  >
+                    返回首页
+                  </button>
+                  <a 
+                    href="mailto:contact@aigeektools.com"
+                    className={`${btnBase} border-2 ${
+                      dark ? "border-gray-600 text-gray-300 hover:border-gray-500" : "border-gray-300 text-gray-600 hover:border-gray-400"
+                    }`}
+                  >
+                    联系我们
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       )}
 
-      {/* 底部 */}
-      <footer className={`text-center py-8 border-t ${
-        dark ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"
-      }`}>
-        <p className="text-sm">
-          © {new Date().getFullYear()} AI极客工具箱 · 仅供学习交流使用
-        </p>
-      </footer>
+      {/* 页脚 */}
+      {!about && (
+        <footer className={`border-t ${dark ? "border-gray-800 bg-gray-900" : "border-gray-200 bg-white"}`}>
+          <div className={`${pagePadding} py-8`}>
+            <div className="text-center">
+              <div className={`text-sm ${textThird} mb-2`}>
+                © 2024 AI极客工具箱 · 已运营 {days} 天 · 收录 {totalTools} 款工具
+              </div>
+              <div className={`text-xs ${textThird}`}>
+                让AI工具触手可及 · 持续更新中...
+              </div>
+            </div>
+          </div>
+        </footer>
+      )}
     </div>
   )
 }

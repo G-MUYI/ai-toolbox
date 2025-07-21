@@ -1,144 +1,151 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+// Tool interface to fix TypeScript typing
+interface ToolData {
+  name: string
+  description: string
+  url: string
+  category: string
+  tag: string
+  isVip: boolean
+  updatedAt: Date
+  createdAt?: Date
+}
+
 // 抓取Toolify.ai的AI工具数据
-export async function GET(request: NextRequest) {
-  const startTime = Date.now()
-  let itemsFound = 0
-  let itemsAdded = 0
-  let itemsUpdated = 0
-  
+export async function GET() {
   try {
+    const startTime = Date.now()
     console.log('开始抓取 Toolify.ai 数据...')
-    
-    // 目标URL - Toolify.ai的中文页面
-    const baseUrl = 'https://www.toolify.ai/zh'
-    
-    // 发送HTTP请求
-    const response = await axios.get(baseUrl, {
+
+    // 抓取网页内容
+    const response = await axios.get('https://www.toolify.ai/zh/', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       },
-      timeout: 30000
+      timeout: 10000
     })
-    
-    // 解析HTML
+
     const $ = cheerio.load(response.data)
     
-    // 查找工具卡片 - 需要分析网站结构来确定选择器
-    const toolCards = $('.tool-card, .ai-tool-card, [class*="tool"], [class*="card"]').slice(0, 20) // 先测试20个
-    
+    // 查找工具卡片
+    const toolCards = $('.tool-card, .ai-tool-card, [class*="tool"], [class*="card"]').slice(0, 20)
     console.log(`找到 ${toolCards.length} 个工具卡片`)
-    itemsFound = toolCards.length
-    
-    // 遍历每个工具卡片
+
+    let itemsFound = 0
+    let itemsAdded = 0
+    let itemsUpdated = 0
+
+    // 处理每个工具
     for (let i = 0; i < toolCards.length; i++) {
-      const card = $(toolCards[i])
+      const element = toolCards.eq(i)
       
-      // 提取工具信息 - 根据实际HTML结构调整
-      const name = card.find('h3, .title, [class*="name"], [class*="title"]').first().text().trim()
-      const description = card.find('.description, .desc, p').first().text().trim()
-      const url = card.find('a').first().attr('href') || ''
-      const logoUrl = card.find('img').first().attr('src') || ''
-      
-      if (name && url) {
-        try {
-          // 检查是否已存在
-          const existing = await prisma.aiTool.findFirst({
-            where: {
-              OR: [
-                { name: name },
-                { url: url.startsWith('http') ? url : `https://www.toolify.ai${url}` }
-              ]
+      try {
+        // 提取工具信息
+        const name = element.find('h3, .title, .name, [class*="title"], [class*="name"]').first().text().trim()
+        const desc = element.find('p, .desc, .description, [class*="desc"]').first().text().trim()
+        const linkElement = element.find('a').first()
+        const url = linkElement.attr('href') || ''
+        
+        if (!name || name.length < 2) continue
+        
+        itemsFound++
+        
+        // 智能分类逻辑
+        let category = 'other'
+        let tag = '其他工具'
+        
+        const nameAndDesc = (name + ' ' + desc).toLowerCase()
+        
+        if (nameAndDesc.includes('write') || nameAndDesc.includes('text') || nameAndDesc.includes('写作') || nameAndDesc.includes('文本')) {
+          category = 'write'
+          tag = '写作工具'
+        } else if (nameAndDesc.includes('image') || nameAndDesc.includes('photo') || nameAndDesc.includes('图片') || nameAndDesc.includes('绘画')) {
+          category = 'image'
+          tag = '图片处理'
+        } else if (nameAndDesc.includes('video') || nameAndDesc.includes('audio') || nameAndDesc.includes('音频') || nameAndDesc.includes('视频')) {
+          category = 'audio'
+          tag = '音频视频'
+        } else if (nameAndDesc.includes('code') || nameAndDesc.includes('dev') || nameAndDesc.includes('程序') || nameAndDesc.includes('开发')) {
+          category = 'code'
+          tag = '代码开发'
+        }
+
+        // 检查工具是否已存在 (使用正确的模型名称 - 大写 Tool)
+        const existingTool = await prisma.tool.findFirst({
+          where: {
+            OR: [
+              { name: name },
+              { url: url }
+            ]
+          }
+        })
+
+        const toolData: ToolData = {
+          name: name,
+          description: desc || `${name} - AI工具`,
+          url: url.startsWith('http') ? url : `https://www.toolify.ai${url}`,
+          category: category,
+          tag: tag,
+          isVip: false,
+          updatedAt: new Date()
+        }
+
+        if (existingTool) {
+          // 更新现有工具
+          await prisma.tool.update({
+            where: { id: existingTool.id },
+            data: toolData
+          })
+          itemsUpdated++
+        } else {
+          // 添加新工具
+          await prisma.tool.create({
+            data: {
+              ...toolData,
+              createdAt: new Date()
             }
           })
-          
-          const toolData = {
-            name,
-            description: description || `${name}是一款AI工具`,
-            url: url.startsWith('http') ? url : `https://www.toolify.ai${url}`,
-            logoUrl: logoUrl.startsWith('http') ? logoUrl : logoUrl ? `https://www.toolify.ai${logoUrl}` : null,
-            category: '未分类',
-            tags: 'AI工具',
-            pricing: 'unknown',
-            sourceUrl: baseUrl
-          }
-          
-          if (existing) {
-            // 更新现有记录
-            await prisma.aiTool.update({
-              where: { id: existing.id },
-              data: {
-                description: toolData.description,
-                logoUrl: toolData.logoUrl,
-                updatedAt: new Date()
-              }
-            })
-            itemsUpdated++
-          } else {
-            // 创建新记录
-            await prisma.aiTool.create({
-              data: toolData
-            })
-            itemsAdded++
-          }
-          
-          console.log(`处理工具: ${name}`)
-        } catch (error) {
-          console.error(`处理工具 ${name} 时出错:`, error)
+          itemsAdded++
         }
+
+        console.log(`处理工具: ${name} (${category})`)
+        
+      } catch (toolError) {
+        console.error(`处理工具时出错:`, toolError)
+        continue
       }
     }
+
+    const duration = Math.round((Date.now() - startTime) / 1000)
     
-    // 记录抓取日志
-    const duration = Math.floor((Date.now() - startTime) / 1000)
-    await prisma.scrapingLog.create({
-      data: {
-        source: 'toolify.ai',
-        status: 'success',
-        itemsFound,
-        itemsAdded,
-        itemsUpdated,
-        duration
-      }
-    })
-    
+    console.log(`抓取完成: 找到 ${itemsFound} 个工具, 新增 ${itemsAdded} 个, 更新 ${itemsUpdated} 个, 耗时 ${duration} 秒`)
+
     return NextResponse.json({
       success: true,
       message: '抓取完成',
       data: {
         itemsFound,
         itemsAdded,
-        itemsUpdated,
-        duration
-      }
+        itemsUpdated
+      },
+      duration
     })
-    
+
   } catch (error) {
-    console.error('抓取过程中出错:', error)
-    
-    // 记录错误日志
-    const duration = Math.floor((Date.now() - startTime) / 1000)
-    await prisma.scrapingLog.create({
-      data: {
-        source: 'toolify.ai',
-        status: 'failed',
-        itemsFound,
-        itemsAdded,
-        itemsUpdated,
-        errorMsg: error instanceof Error ? error.message : '未知错误',
-        duration
-      }
-    })
+    console.error('抓取过程出错:', error)
     
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : '抓取失败'
+      error: error instanceof Error ? error.message : '抓取失败',
+      message: '抓取过程中发生错误'
     }, { status: 500 })
+    
   } finally {
     await prisma.$disconnect()
   }

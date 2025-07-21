@@ -86,39 +86,39 @@ export default function Home() {
   const sectionRefs = useRef<(HTMLElement | null)[]>([])
 
   // 加载工具数据
-  useEffect(() => {
-    async function loadTools() {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/tools')
-        if (!response.ok) {
-          throw new Error('Failed to fetch tools')
-        }
-        const data = await response.json()
-        
-        if (data.success) {
-          setGroups(data.data.groups)
-          setLastUpdate(data.data.lastUpdate)
-          
-          // 初始化每个分组的活跃标签
-          const initialMap: Record<number, string> = {}
-          data.data.groups.forEach((group: GroupType, idx: number) => {
-            initialMap[idx] = group.tags[0] || ""
-          })
-          setActiveTagMap(initialMap)
-        } else {
-          setError(data.error || '加载数据失败')
-        }
-      } catch (err) {
-        setError('网络错误，请稍后重试')
-        console.error('加载工具数据失败:', err)
-      } finally {
-        setLoading(false)
+useEffect(() => {
+  async function loadTools() {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/tools');
+      if (!response.ok) {
+        throw new Error('Failed to fetch tools');
       }
-    }
+      const data = await response.json();
 
-    loadTools()
-  }, [])
+      if (data.success) {
+        setGroups(data.data.groups);
+        setLastUpdate(data.data.lastUpdate);
+
+        // 初始化每个分组的活跃标签
+        const initialMap: Record<number, string> = {};
+        data.data.groups.forEach((group: GroupType, idx: number) => {
+          initialMap[idx] = group.tags[0] || '';
+        });
+        setActiveTagMap(initialMap);
+      } else {
+        setError(data.error || '加载数据失败');
+      }
+    } catch (error: unknown) {
+      setError('网络错误，请稍后重试');
+      console.error('加载工具数据失败:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadTools();
+}, []);
 
   // 计算运营天数
   useEffect(() => {
@@ -197,7 +197,7 @@ export default function Home() {
       } else {
         alert('数据更新失败: ' + result.error)
       }
-    } catch (err) {
+    } catch {
       alert('数据更新失败，请稍后重试')
     } finally {
       setLoading(false)
